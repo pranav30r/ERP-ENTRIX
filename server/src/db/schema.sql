@@ -182,9 +182,9 @@ INSERT INTO departments (id, code, name, quarterly_budget) VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- 3. Insert Default Super Admin User (password: Admin@123)
--- bcrypt hash for 'Admin@123' with 10 rounds: $2a$10$wT8K5qgX2mUj5m9HkFq3QOuX7qGjU8yK1hW7zW.O7W9qCqM1l7t2q
+-- bcrypt hash for 'Admin@123' with 10 rounds: $2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK
 INSERT INTO users (id, email, password_hash, first_name, last_name, role_id, department_id) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@entrix.local', '$2a$10$wT8K5qgX2mUj5m9HkFq3QOuX7qGjU8yK1hW7zW.O7W9qCqM1l7t2q', 'Aditya', 'Admin', 1, '11111111-1111-1111-1111-111111111111')
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Aditya', 'Admin', 1, '11111111-1111-1111-1111-111111111111')
 ON CONFLICT (email) DO NOTHING;
 
 -- 4. Insert Initial Inventory Seed Items

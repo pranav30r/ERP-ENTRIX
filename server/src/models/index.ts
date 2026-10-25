@@ -1,0 +1,145 @@
+import { DataTypes, Model, Optional } from 'sequelize';
+import { sequelize } from '../config/db';
+
+// 1. Department Model
+export class Department extends Model {
+  declare public id: string;
+  declare public code: string;
+  declare public name: string;
+  declare public quarterly_budget: number;
+  declare public readonly created_at: Date;
+  declare public readonly updated_at: Date;
+}
+Department.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  code: { type: DataTypes.STRING(16), unique: true, allowNull: false },
+  name: { type: DataTypes.STRING(128), allowNull: false },
+  quarterly_budget: { type: DataTypes.DECIMAL(12, 2), defaultValue: 500000.00 }
+}, { sequelize, tableName: 'departments', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+// 2. Role Model
+export class Role extends Model {
+  declare public id: number;
+  declare public name: string;
+  declare public description: string;
+  declare public permissions: Record<string, any>;
+}
+Role.init({
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  name: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  description: { type: DataTypes.STRING(255) },
+  permissions: { type: DataTypes.JSONB, defaultValue: {} }
+}, { sequelize, tableName: 'roles', timestamps: false });
+
+// 3. User Model
+export class User extends Model {
+  declare public id: string;
+  declare public email: string;
+  declare public password_hash: string;
+  declare public first_name: string;
+  declare public last_name: string;
+  declare public role_id: number;
+  declare public department_id: string;
+  declare public is_active: boolean;
+  declare public failed_attempts: number;
+  declare public locked_until: Date | null;
+  declare public readonly created_at: Date;
+  declare public readonly updated_at: Date;
+}
+User.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  email: { type: DataTypes.STRING(255), unique: true, allowNull: false },
+  password_hash: { type: DataTypes.STRING(255), allowNull: false },
+  first_name: { type: DataTypes.STRING(64), allowNull: false },
+  last_name: { type: DataTypes.STRING(64), allowNull: false },
+  role_id: { type: DataTypes.INTEGER, allowNull: false },
+  department_id: { type: DataTypes.UUID, allowNull: true },
+  is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
+  failed_attempts: { type: DataTypes.INTEGER, defaultValue: 0 },
+  locked_until: { type: DataTypes.DATE, allowNull: true }
+}, { sequelize, tableName: 'users', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+// 4. InventoryItem Model
+export class InventoryItem extends Model {
+  declare public id: string;
+  declare public sku_code: string;
+  declare public name: string;
+  declare public category: string;
+  declare public unit_of_measure: string;
+  declare public unit_price: number;
+  declare public stock_qty: number;
+  declare public safety_stock: number;
+  declare public readonly created_at: Date;
+  declare public readonly updated_at: Date;
+}
+InventoryItem.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  sku_code: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  name: { type: DataTypes.STRING(128), allowNull: false },
+  category: { type: DataTypes.STRING(64), allowNull: false },
+  unit_of_measure: { type: DataTypes.STRING(16), defaultValue: 'PCS' },
+  unit_price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  stock_qty: { type: DataTypes.INTEGER, defaultValue: 0 },
+  safety_stock: { type: DataTypes.INTEGER, defaultValue: 10 }
+}, { sequelize, tableName: 'inventory_items', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+// 5. PurchaseRequest Model
+export class PurchaseRequest extends Model {
+  declare public id: string;
+  declare public pr_code: string;
+  declare public requester_id: string;
+  declare public department_id: string;
+  declare public item_id: string;
+  declare public quantity: number;
+  declare public estimated_total: number;
+  declare public status: 'DRAFT' | 'PENDING_MANAGER' | 'PENDING_FINANCE' | 'APPROVED' | 'PO_ISSUED' | 'GOODS_RECEIVED' | 'INVOICE_MATCHED' | 'CLOSED' | 'REJECTED';
+  declare public justification: string;
+  declare public rejection_reason: string | null;
+  declare public readonly created_at: Date;
+  declare public readonly updated_at: Date;
+}
+PurchaseRequest.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  pr_code: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  requester_id: { type: DataTypes.UUID, allowNull: false },
+  department_id: { type: DataTypes.UUID, allowNull: false },
+  item_id: { type: DataTypes.UUID, allowNull: false },
+  quantity: { type: DataTypes.INTEGER, allowNull: false },
+  estimated_total: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+  status: {
+    type: DataTypes.ENUM('DRAFT', 'PENDING_MANAGER', 'PENDING_FINANCE', 'APPROVED', 'PO_ISSUED', 'GOODS_RECEIVED', 'INVOICE_MATCHED', 'CLOSED', 'REJECTED'),
+    defaultValue: 'DRAFT'
+  },
+  justification: { type: DataTypes.TEXT, allowNull: false },
+  rejection_reason: { type: DataTypes.TEXT, allowNull: true }
+}, { sequelize, tableName: 'purchase_requests', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+// 6. AuditLog Model
+export class AuditLog extends Model {
+  declare public id: number;
+  declare public actor_id: string | null;
+  declare public action: string;
+  declare public entity_name: string;
+  declare public entity_id: string;
+  declare public diff_payload: Record<string, any>;
+  declare public previous_hash: string;
+  declare public current_hash: string;
+  declare public readonly timestamp: Date;
+}
+AuditLog.init({
+  id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+  actor_id: { type: DataTypes.UUID, allowNull: true },
+  action: { type: DataTypes.STRING(64), allowNull: false },
+  entity_name: { type: DataTypes.STRING(64), allowNull: false },
+  entity_id: { type: DataTypes.UUID, allowNull: false },
+  diff_payload: { type: DataTypes.JSONB, defaultValue: {} },
+  previous_hash: { type: DataTypes.STRING(64), allowNull: false },
+  current_hash: { type: DataTypes.STRING(64), allowNull: false }
+}, { sequelize, tableName: 'audit_logs', timestamps: false });
+
+// Relationships
+User.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
+User.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
+PurchaseRequest.belongsTo(User, { foreignKey: 'requester_id', as: 'requester' });
+PurchaseRequest.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
+PurchaseRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });

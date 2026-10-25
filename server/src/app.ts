@@ -9,6 +9,7 @@ import { connectDB } from './config/db';
 import authRoutes from './routes/authRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import procurementRoutes from './routes/procurementRoutes';
+import projectRoutes from './routes/projectRoutes';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
@@ -43,6 +44,7 @@ app.use((req: any, res, next) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/procurement', procurementRoutes);
+app.use('/api/v1/projects', projectRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

@@ -95,13 +95,13 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
 -- 7. Purchase Orders (PO)
 CREATE TABLE IF NOT EXISTS purchase_orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    po_code VARCHAR(32) UNIQUE NOT NULL,
+    po_number VARCHAR(32) UNIQUE NOT NULL,
     pr_id UUID NOT NULL REFERENCES purchase_requests(id) ON DELETE RESTRICT,
     vendor_name VARCHAR(128) NOT NULL,
+    ordered_quantity INT NOT NULL CHECK (ordered_quantity > 0),
     total_amount NUMERIC(12, 2) NOT NULL CHECK (total_amount >= 0.00),
-    status VARCHAR(32) NOT NULL DEFAULT 'ISSUED',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    issued_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 8. Goods Received Notes (GRN)

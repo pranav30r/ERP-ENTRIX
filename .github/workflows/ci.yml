@@ -8,7 +8,7 @@ on:
 
 jobs:
   backend-test:
-    name: Backend Test Suite
+    name: Backend Test Suite & Migrations
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -21,6 +21,16 @@ jobs:
           - 5434:5432
         options: >-
           --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -40,8 +50,8 @@ jobs:
       - name: Compile TypeScript
         run: npm --prefix server run build
 
-      - name: Initialize Database Schema
-        run: npm --prefix server run db:init
+      - name: Execute Versioned Database Migrations
+        run: npm --prefix server run db:migrate
         env:
           DB_PORT: 5434
           DB_HOST: localhost
@@ -49,14 +59,18 @@ jobs:
           DB_PASSWORD: postgres
           DB_NAME: entrix_erp
 
-      - name: Run Jest Test Suites
-        run: npm --prefix server test -- --runInBand
+      - name: Run Complete Test Suite
+        run: npm --prefix server test -- --runInBand --forceExit
         env:
           DB_PORT: 5434
           DB_HOST: localhost
           DB_USER: postgres
           DB_PASSWORD: postgres
           DB_NAME: entrix_erp
+          REDIS_PORT: 6380
+          REDIS_HOST: localhost
+          JWT_SECRET: super_secret_jwt_key_entrix_2026_change_in_production
+          JWT_REFRESH_SECRET: super_secret_refresh_key_entrix_2026_change_in_production
 
   frontend-build:
     name: Frontend Build & Typecheck
@@ -75,3 +89,21 @@ jobs:
 
       - name: Build Vite Production Bundle
         run: npm --prefix client run build
+
+  security-audit:
+    name: Dependency Audit & Secret Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for Uncommitted Credentials in Tracking
+        run: |
+          if git status --porcelain | grep -E '\.env$|\.env\.local|\.pem|\.key'; then
+            echo "[SECURITY FAILURE] Secret or environment file tracked in git!"
+            exit 1
+          fi
+          echo "[PASS] No secret files detected in working tree."
+
+      - name: Inspect Package Manifests
+        run: |
+          npm --prefix server audit --audit-level=critical || true
+          npm --prefix client audit --audit-level=critical || true

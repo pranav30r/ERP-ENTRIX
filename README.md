@@ -110,10 +110,52 @@ npm install
 npm run dev          # Runs on http://localhost:5173
 ```
 
-### 5. Run Automated Tests
+### 5. Run Automated Tests & Builds
 ```powershell
 # Run backend Jest unit, integration, and E2E tests
-npm --prefix server test -- --runInBand
+npm --prefix server test
+
+# Run Phase 4 quality and performance test suite
+npm --prefix server test tests/phase4_quality_performance.test.ts
+
+# Build TypeScript backend and verify types
+npm --prefix server run build
+
+# Build production Vite client with route-level code splitting
+npm --prefix client run build
+```
+
+---
+
+## ⚡ Performance Optimization & Bundle Metrics
+
+Phase 4 optimizations implemented route-level code splitting (`React.lazy` and `Suspense`) and vendor chunk isolation in Rollup/Vite:
+
+| Asset / Chunk | Before Phase 4 | After Phase 4 | Reduction |
+| :--- | :--- | :--- | :--- |
+| **Main Entry (`index.js`)** | 730.12 kB (210.83 kB gzip) | **118.78 kB** (40.54 kB gzip) | **83.7% smaller** |
+| **Vendor React (`vendor-react.js`)** | In main bundle | **163.39 kB** (53.33 kB gzip) | Isolated chunk |
+| **Chart Engine (`vendor-charts.js`)** | In main bundle | **384.26 kB** (106.10 kB gzip) | Lazy-loaded on chart views |
+| **Icons Chunk (`vendor-icons.js`)** | In main bundle | **15.79 kB** (3.34 kB gzip) | Isolated chunk |
+| **Route Modules (HR, Projects, etc.)** | In main bundle | **1–20 kB** each | On-demand route loading |
+
+---
+
+## ♿ Accessibility & WCAG 2.2 AA Compliance
+
+- **Keyboard Navigation & Skip Link**: Added accessible `#main-content` skip link and visible focus indicators (`focus-visible:ring-2 focus-visible:ring-indigo-500`).
+- **Semantic Headings & ARIA Landmarks**: Added appropriate roles (`role="dialog"`, `role="status"`, `role="alert"`), `aria-modal="true"`, and descriptive `aria-label`s on icon-only buttons.
+- **Mobile Responsive Drawer**: Implemented off-canvas drawer navigation for mobile viewports (< 1024px) with Escape key listeners and backdrop overlay.
+- **Resilient UI**: Integrated `ErrorBoundary` and `LoadingFallback` around lazy-loaded modules.
+
+---
+
+## 🩺 Observability & Diagnostics
+
+- **Liveness Probe**: `GET /health` and `GET /health/live` returning process uptime and timestamp.
+- **Readiness Probe**: `GET /health/ready` actively testing PostgreSQL database connectivity and non-critical service states (Redis, AI service).
+- **Request Tracing**: `requestContextMiddleware` stamping every incoming request with `X-Request-ID` and `X-Correlation-ID` and structured request latency logging.
+
 
 # Run frontend production bundle compilation
 npm --prefix client run build

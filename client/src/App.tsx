@@ -1,23 +1,39 @@
-import React from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NavProvider } from './context/NavContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import { Dashboard } from './pages/Dashboard';
-import { Procurement } from './pages/Procurement';
-import { Inventory } from './pages/Inventory';
-import { AIInsights } from './pages/AIInsights';
-import { Finance } from './pages/Finance';
-import { HR } from './pages/HR';
-import { Projects } from './pages/Projects';
-import { AuditLogs } from './pages/AuditLogs';
-import { NotFound } from './pages/NotFound';
+import { LoadingFallback } from './components/ui/LoadingFallback';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
-export const App: React.FC = () => {
+// Route-level code-splitting for high-performance chunked loading
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Procurement = lazy(() => import('./pages/Procurement').then(m => ({ default: m.Procurement })));
+const Inventory = lazy(() => import('./pages/Inventory'));
+const AIInsights = lazy(() => import('./pages/AIInsights').then(m => ({ default: m.AIInsights })));
+const Finance = lazy(() => import('./pages/Finance'));
+const HR = lazy(() => import('./pages/HR'));
+const Projects = lazy(() => import('./pages/Projects'));
+const AuditLogs = lazy(() => import('./pages/AuditLogs'));
+const CompanySettings = lazy(() => import('./pages/CompanySettings'));
+const SubscriptionBilling = lazy(() => import('./pages/SubscriptionBilling'));
+const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound })));
+
+export const App = () => {
   return (
     <AuthProvider>
-      <Router>
+      <NavProvider>
+        <Router>
         <div className="flex h-screen bg-stripe-canvas overflow-hidden">
+          {/* Skip link for keyboard accessibility (WCAG 2.2 AA) */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white text-xs font-semibold"
+          >
+            Skip to main content
+          </a>
+
           {/* Linear-style Charcoal Sidebar */}
           <Sidebar />
 
@@ -27,22 +43,29 @@ export const App: React.FC = () => {
             <Header />
 
             {/* Page Body */}
-            <main className="p-8 max-w-7xl w-full mx-auto">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/procurement" element={<Procurement />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/ai-insights" element={<AIInsights />} />
-                <Route path="/finance" element={<Finance />} />
-                <Route path="/hr" element={<HR />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/audit" element={<AuditLogs />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+            <main id="main-content" tabIndex={-1} className="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto focus:outline-none">
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/procurement" element={<Procurement />} />
+                    <Route path="/inventory" element={<Inventory />} />
+                    <Route path="/ai-insights" element={<AIInsights />} />
+                    <Route path="/finance" element={<Finance />} />
+                    <Route path="/hr" element={<HR />} />
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/audit" element={<AuditLogs />} />
+                    <Route path="/settings/company" element={<CompanySettings />} />
+                    <Route path="/settings/billing" element={<SubscriptionBilling />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
             </main>
           </div>
         </div>
       </Router>
+      </NavProvider>
     </AuthProvider>
   );
 };

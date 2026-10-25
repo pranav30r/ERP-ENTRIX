@@ -28,17 +28,18 @@ export const hashToken = (token: string): string => {
 };
 
 export const generateAccessToken = (user: any): string => {
-  const roleName = user.role ? user.role.name : 'STAFF_USER';
+  const roleName = user.role?.name || user.role_name || (typeof user.role === 'string' ? user.role : 'STAFF_USER');
   return jwt.sign(
     {
       id: user.id,
       email: user.email,
       role_id: user.role_id,
       role_name: roleName,
-      department_id: user.department_id
+      tenant_id: user.tenant_id || null,
+      department_id: user.department_id || null
     },
     ENV.JWT_SECRET,
-    { expiresIn: ENV.JWT_EXPIRES_IN as any }
+    { expiresIn: ENV.JWT_EXPIRES_IN as any, algorithm: 'HS256' }
   );
 };
 

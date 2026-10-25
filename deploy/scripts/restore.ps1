@@ -8,8 +8,8 @@ param (
     [string]$BackupPath,
 
     [string]$ContainerName = "entrix-postgres",
-    [string]$DbUser = "entrix_user",
-    [string]$DbName = "entrix_erp"
+    [string]$DbUser = $(if ($env:DB_USER) { $env:DB_USER } else { "postgres" }),
+    [string]$DbName = $(if ($env:DB_NAME) { $env:DB_NAME } else { "entrix_erp" })
 )
 
 $ErrorActionPreference = "Stop"

@@ -15,6 +15,8 @@ export const AIInsights: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
   const [reorderQty, setReorderQty] = useState(0);
   const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [isFallback, setIsFallback] = useState(false);
+  const [modelName, setModelName] = useState('RandomForestRegressor');
 
   useEffect(() => {
     const fetchAI = async () => {
@@ -35,6 +37,8 @@ export const AIInsights: React.FC = () => {
 
         setForecastData(formatted);
         setReorderQty(forecastRes.data.recommended_reorder_qty || 620);
+        setIsFallback(!!forecastRes.data.is_fallback);
+        setModelName(forecastRes.data.model || (forecastRes.data.is_fallback ? 'Fallback Moving Average (SMA)' : 'RandomForestRegressor (Python 3.11)'));
 
         // Fetch anomaly detection
         const anomalyRes = await apiClient.post('/ai/anomalies', {
@@ -56,6 +60,8 @@ export const AIInsights: React.FC = () => {
         }));
         setForecastData(mockDays);
         setReorderQty(620);
+        setIsFallback(true);
+        setModelName('Statistical Heuristic Fallback (Local SMA)');
         setAnomalies([
           {
             transaction_id: 'TX-903',
@@ -78,9 +84,15 @@ export const AIInsights: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">AI Decision Intelligence Suite</h2>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
-              <Cpu className="w-3 h-3" /> Python 3.11 + FastAPI Live
-            </span>
+            {isFallback ? (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-amber-600" /> Statistical Fallback Active ({modelName})
+              </span>
+            ) : (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <Cpu className="w-3 h-3 text-emerald-600" /> Python FastAPI ML Live ({modelName})
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-0.5">Scikit-learn Random Forest regression and Isolation Forest outlier analytics</p>
         </div>

@@ -1,3 +1,7 @@
+# ====================================================================
+# ENTRIX ERP Backend API - Production Multi-Stage Container Image
+# ====================================================================
+
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -7,14 +11,26 @@ RUN npm ci
 COPY src ./src
 RUN npm run build
 
+# ====================================================================
 FROM node:20-alpine AS runner
+
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Install only production dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev && npm cache clean --force
 
+# Copy compiled JavaScript dist and versioned SQL migration scripts
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/db/migrations ./src/db/migrations
+
+# Security: Run as non-privileged node user
+USER node
 
 EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
+
 CMD ["node", "dist/app.js"]

@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+dist
+build
+coverage
+*.log
+.env
+.env.*
+!.env.example
+deploy/backups/*.sql
+tmp
+.vscode
+.idea

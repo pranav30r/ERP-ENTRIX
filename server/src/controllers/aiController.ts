@@ -4,8 +4,9 @@ import { AIService } from '../services/aiService';
 export const getDemandForecast = async (req: Request, res: Response): Promise<void> => {
   try {
     const { sku_id, historical_series } = req.body;
+    const tenantId = (req as any).user?.tenant_id || (req as any).tenantId;
     const sku = sku_id || 'RAW-STL-001';
-    const result = await AIService.getDemandForecast(sku, historical_series);
+    const result = await AIService.getDemandForecast(sku, historical_series, tenantId);
     res.status(200).json({
       success: true,
       ...result
@@ -18,6 +19,7 @@ export const getDemandForecast = async (req: Request, res: Response): Promise<vo
 export const detectExpenseAnomalies = async (req: Request, res: Response): Promise<void> => {
   try {
     const { transactions } = req.body;
+    const tenantId = (req as any).user?.tenant_id || (req as any).tenantId;
     const sample = transactions && transactions.length > 0 ? transactions : [
       { id: 'TX-901', amount: 1450, department_code: 'DEPT-ENG', vendor_name: 'Apex Steel', hour_of_day: 14, is_weekend: false },
       { id: 'TX-902', amount: 2100, department_code: 'DEPT-ENG', vendor_name: 'Apex Steel', hour_of_day: 10, is_weekend: false },
@@ -25,7 +27,7 @@ export const detectExpenseAnomalies = async (req: Request, res: Response): Promi
       { id: 'TX-904', amount: 1800, department_code: 'DEPT-PROC', vendor_name: 'Office Pro', hour_of_day: 15, is_weekend: false }
     ];
 
-    const result = await AIService.detectAnomalies(sample);
+    const result = await AIService.detectAnomalies(sample, tenantId);
     res.status(200).json({
       success: true,
       ...result

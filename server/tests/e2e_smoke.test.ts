@@ -81,7 +81,9 @@ describe('ENTRIX E2E System Lifecycle Integration Smoke Test', () => {
       'SMOKE_TEST_EXECUTION',
       'inventory_items',
       testItemId,
-      { status: 'SUCCESS' }
+      { status: 'SUCCESS' },
+      undefined,
+      user ? (user as any).tenant_id : undefined
     );
 
     const res = await request(app)

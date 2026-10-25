@@ -10,6 +10,9 @@ import {
   revokeRefreshToken
 } from '../services/tokenService';
 
+// Pre-computed dummy bcrypt hash to ensure constant-time comparison for nonexistent users
+const DUMMY_BCRYPT_HASH = '$2a$10$w8T0M0tI.fO3W2aB3wO0xOqvJ60M6O5n7YqM8I8z3F0iB5o8l9V3W';
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
@@ -29,6 +32,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!user) {
+      // Execute constant-time dummy bcrypt check to prevent username enumeration via timing attacks
+      await bcrypt.compare(String(password), DUMMY_BCRYPT_HASH);
       res.status(401).json({ success: false, error: 'Invalid email or password.' });
       return;
     }
@@ -40,7 +45,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const now = new Date();
 
-    // Check existing lockout state
+    // Check existing lockout state before performing password verification
     if (user.locked_until && new Date(user.locked_until) > now) {
       const remainingMinutes = Math.max(
         1,
@@ -55,16 +60,20 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Verify password hash
     const passwordHash = user.getDataValue('password_hash');
-    const isMatch = await bcrypt.compare(password, passwordHash);
+    const isMatch = await bcrypt.compare(String(password), passwordHash);
 
     if (!isMatch) {
-      // Atomic increment and conditional lockout in PostgreSQL
+      // Atomic increment and conditional lockout in PostgreSQL to prevent race conditions
       const [updatedRows]: any = await sequelize.query(
         `
         UPDATE users
-        SET failed_attempts = failed_attempts + 1,
+        SET failed_attempts = CASE
+              WHEN locked_until IS NOT NULL AND locked_until <= NOW() THEN 1
+              ELSE failed_attempts + 1
+            END,
             locked_until = CASE
-              WHEN failed_attempts + 1 >= :maxAttempts THEN NOW() + (:lockoutMinutes || ' minutes')::interval
+              WHEN (CASE WHEN locked_until IS NOT NULL AND locked_until <= NOW() THEN 1 ELSE failed_attempts + 1 END) >= :maxAttempts
+                THEN NOW() + (:lockoutMinutes || ' minutes')::interval
               ELSE NULL
             END,
             updated_at = NOW()
@@ -111,7 +120,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       );
     }
 
-    const roleName = (user as any).role ? (user as any).role.name : 'STAFF_USER';
     const accessToken = generateAccessToken(user);
     const refreshToken = await issueRefreshToken(user.id);
 
@@ -123,10 +131,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       expires_in: ENV.JWT_EXPIRES_IN,
       user: {
         id: user.id,
+        tenant_id: user.tenant_id,
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: roleName,
+        role: (user as any).role ? (user as any).role.name : 'STAFF_USER',
         department: (user as any).department ? (user as any).department.name : null
       }
     });
@@ -150,23 +159,24 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     if (result.status === 'REUSE_DETECTED') {
       res.status(403).json({
         success: false,
-        error: 'Refresh token reuse detected. All active sessions have been revoked for security.'
+        error: 'Security alert: Refresh token reuse detected. All active sessions have been revoked.'
       });
       return;
     }
 
     if (result.status === 'EXPIRED') {
-      res.status(401).json({ success: false, error: 'Refresh token has expired. Please log in again.' });
+      res.status(401).json({
+        success: false,
+        error: 'Refresh token has expired. Please log in again.'
+      });
       return;
     }
 
-    if (result.status === 'USER_INACTIVE') {
-      res.status(403).json({ success: false, error: 'Account is deactivated.' });
-      return;
-    }
-
-    if (result.status === 'INVALID' || !result.accessToken || !result.refreshToken) {
-      res.status(401).json({ success: false, error: 'Invalid refresh token.' });
+    if (result.status === 'USER_INACTIVE' || result.status === 'INVALID' || !result.accessToken) {
+      res.status(401).json({
+        success: false,
+        error: 'Invalid or revoked refresh token.'
+      });
       return;
     }
 
@@ -199,24 +209,73 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const unlockUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, userId } = req.body;
+
+    if (!email && !userId) {
+      res.status(400).json({ success: false, error: 'Either email or userId is required.' });
+      return;
+    }
+
+    const whereClause: any = {};
+    if (userId) whereClause.id = userId;
+    if (email) whereClause.email = String(email).trim().toLowerCase();
+
+    const [updatedCount] = await User.update(
+      { failed_attempts: 0, locked_until: null },
+      { where: whereClause }
+    );
+
+    if (updatedCount === 0) {
+      res.status(404).json({ success: false, error: 'User not found.' });
+      return;
+    }
+
+    res.status(200).json({ success: true, message: 'User account unlocked successfully.' });
+  } catch (error) {
+    console.error('Unlock error:', error);
+    res.status(500).json({ success: false, error: 'Internal server error during account unlock.' });
+  }
+};
+
 export const getMe = async (req: Request, res: Response): Promise<void> => {
   try {
     const authUser = (req as any).user;
-    if (!authUser) {
+    if (!authUser || !authUser.id) {
       res.status(401).json({ success: false, error: 'Unauthorized.' });
       return;
     }
 
     const user = await User.findByPk(authUser.id, {
-      attributes: { exclude: ['password_hash'] },
+      attributes: ['id', 'tenant_id', 'email', 'first_name', 'last_name', 'is_active', 'failed_attempts', 'locked_until'],
       include: [
-        { model: Role, as: 'role' },
-        { model: Department, as: 'department' }
+        { model: Role, as: 'role', attributes: ['id', 'name', 'permissions'] },
+        { model: Department, as: 'department', attributes: ['id', 'name', 'code'] }
       ]
     });
 
-    res.status(200).json({ success: true, user });
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found.' });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        tenant_id: user.tenant_id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        is_active: user.is_active,
+        role: (user as any).role?.name || 'STAFF_USER',
+        permissions: (user as any).role?.permissions || {},
+        department: (user as any).department?.name || null
+      }
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: 'Error fetching profile.' });
+    console.error('Get profile error:', error);
+    res.status(500).json({ success: false, error: 'Internal server error retrieving user profile.' });
   }
 };

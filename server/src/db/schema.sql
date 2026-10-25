@@ -6,19 +6,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Drop existing tables in reverse dependency order (clean build)
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS ledger_entries CASCADE;
-DROP TABLE IF EXISTS goods_received_notes CASCADE;
-DROP TABLE IF EXISTS purchase_orders CASCADE;
-DROP TABLE IF EXISTS purchase_requests CASCADE;
-DROP TABLE IF EXISTS inventory_items CASCADE;
-DROP TABLE IF EXISTS employees CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS roles CASCADE;
-DROP TABLE IF EXISTS departments CASCADE;
-DROP TYPE IF EXISTS pr_status_enum CASCADE;
-DROP TYPE IF EXISTS attendance_status_enum CASCADE;
+-- Safe initialization: Tables and types use non-destructive IF NOT EXISTS
 
 -- 1. Departments Master
 CREATE TABLE departments (

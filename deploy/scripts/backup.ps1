@@ -31,24 +31,58 @@ Write-Host " Output:    $BackupFile" -ForegroundColor DarkGray
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 $StartTime = Get-Date
+$ErrorLog = [System.IO.Path]::GetTempFileName()
 
 try {
-    # Execute pg_dump from within Docker container
-    docker exec $ContainerName pg_dump -U $DbUser -d $DbName --clean --if-exists --inserts > $BackupFile
+    # 1. Verify Docker container is running
+    $containerStatus = (docker inspect --format="{{.State.Running}}" $ContainerName 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $containerStatus -ne "true") {
+        throw "Container '$ContainerName' is not running or accessible."
+    }
 
-    if ((Get-Item $BackupFile).Length -lt 100) {
-        throw "Backup file size is abnormally small ($((Get-Item $BackupFile).Length) bytes)."
+    # 2. Execute pg_dump directly via cmd OS streaming to preserve UTF-8 and capture errors
+    cmd.exe /c "docker exec $ContainerName pg_dump -U $DbUser -d $DbName --clean --if-exists --inserts > `"$BackupFile`" 2> `"$ErrorLog`""
+    $exitCode = $LASTEXITCODE
+
+    # 3. Check native Docker exit code; never print SUCCESS after failure
+    if ($exitCode -ne 0) {
+        $errorMsg = ""
+        if (Test-Path $ErrorLog) {
+            $rawErr = Get-Content $ErrorLog -Raw
+            if ($rawErr) { $errorMsg = $rawErr.Trim() }
+        }
+        if (-not $errorMsg) { $errorMsg = "Docker pg_dump exited with error code $exitCode" }
+        throw $errorMsg
+    }
+
+    if (-not (Test-Path $BackupFile)) {
+        throw "Backup file was not created: $BackupFile"
+    }
+
+    $fileLength = (Get-Item $BackupFile).Length
+    if ($fileLength -lt 100) {
+        throw "Backup file size is abnormally small ($fileLength bytes)."
     }
 
     $FileHash = (Get-FileHash -Path $BackupFile -Algorithm SHA256).Hash
     $Duration = ((Get-Date) - $StartTime).TotalSeconds
 
     Write-Host "[SUCCESS] Backup completed in $([math]::Round($Duration, 2))s" -ForegroundColor Green
-    Write-Host " Size:     $((Get-Item $BackupFile).Length / 1KB) KB" -ForegroundColor Green
+    Write-Host " Size:     $([math]::Round($fileLength / 1KB, 2)) KB" -ForegroundColor Green
     Write-Host " SHA-256:  $FileHash" -ForegroundColor Yellow
     Write-Host "==========================================================" -ForegroundColor Cyan
 }
 catch {
-    Write-Error "[FAILED] Database backup aborted: $_"
+    if (Test-Path $BackupFile) {
+        Remove-Item -Path $BackupFile -Force -ErrorAction SilentlyContinue
+    }
+    Write-Host "==========================================================" -ForegroundColor Red
+    Write-Host "[FAILED] Database backup aborted: $_" -ForegroundColor Red
+    Write-Host "==========================================================" -ForegroundColor Red
     exit 1
+}
+finally {
+    if (Test-Path $ErrorLog) {
+        Remove-Item -Path $ErrorLog -Force -ErrorAction SilentlyContinue
+    }
 }

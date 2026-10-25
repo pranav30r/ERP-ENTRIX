@@ -7,7 +7,8 @@ import {
   Users,
   DollarSign,
   Activity,
-  Sparkles
+  Sparkles,
+  FolderKanban
 } from 'lucide-react';
 
 const navigationItems = [
@@ -16,6 +17,7 @@ const navigationItems = [
   { name: 'Inventory Master', path: '/inventory', icon: Boxes },
   { name: 'Finance & Ledger', path: '/finance', icon: DollarSign },
   { name: 'Human Resources', path: '/hr', icon: Users },
+  { name: 'Project Milestones', path: '/projects', icon: FolderKanban },
   { name: 'AI Decision Suite', path: '/ai-insights', icon: Sparkles, badge: 'ML' },
   { name: 'Audit Logs', path: '/audit', icon: Activity }
 ];

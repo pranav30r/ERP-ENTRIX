@@ -40,6 +40,15 @@ jobs:
       - name: Compile TypeScript
         run: npm --prefix server run build
 
+      - name: Initialize Database Schema
+        run: npm --prefix server run db:init
+        env:
+          DB_PORT: 5434
+          DB_HOST: localhost
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: entrix_erp
+
       - name: Run Jest Test Suites
         run: npm --prefix server test -- --runInBand
         env:

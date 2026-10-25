@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import procurementRoutes from './routes/procurementRoutes';
 import projectRoutes from './routes/projectRoutes';
+import auditRoutes from './routes/auditRoutes';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
@@ -45,6 +46,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/procurement', procurementRoutes);
 app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/audit', auditRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

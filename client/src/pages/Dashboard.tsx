@@ -1,50 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
-  TrendingUp,
   AlertTriangle,
-  Clock,
-  CheckCircle
+  Boxes,
+  Activity,
+  DollarSign
 } from 'lucide-react';
 import { WorkflowTimeline, ProcurementStage } from '../components/WorkflowTimeline';
+import { apiClient, ensureAuthenticated } from '../services/api';
 
 export const Dashboard: React.FC = () => {
   const [inventory, setInventory] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({ total_items: 0, low_stock_items: 0 });
-  const [activeStage] = useState<ProcurementStage>('PENDING_MANAGER');
-  const [activeAmount] = useState<number>(24500);
+  const [recentPR, setRecentPR] = useState<any | null>(null);
+  const [activeStage, setActiveStage] = useState<ProcurementStage>('PENDING_MANAGER');
+  const [activeAmount, setActiveAmount] = useState<number>(24500);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch seed inventory from backend API
-    const fetchInventory = async () => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
       try {
-        // Authenticate as demo admin
-        const auth = await axios.post('http://localhost:5000/api/v1/auth/login', {
-          email: 'admin@entrix.local',
-          password: 'Admin@123'
-        });
+        await ensureAuthenticated();
+        const [invRes, prsRes] = await Promise.all([
+          apiClient.get('/inventory'),
+          apiClient.get('/procurement/requests')
+        ]);
 
-        if (auth.data.access_token) {
-          const res = await axios.get('http://localhost:5000/api/v1/inventory', {
-            headers: { Authorization: `Bearer ${auth.data.access_token}` }
-          });
-          setInventory(res.data.data);
-          setMetrics(res.data.metrics);
+        if (invRes.data.success) {
+          setInventory(invRes.data.data);
+          setMetrics(invRes.data.metrics);
+        }
+
+        if (prsRes.data.success && prsRes.data.data.length > 0) {
+          const latest = prsRes.data.data[0];
+          setRecentPR(latest);
+          setActiveStage(latest.status as ProcurementStage);
+          setActiveAmount(Number(latest.estimated_total));
         }
       } catch (e) {
-        console.warn('Backend API connection pending or loading local mock...');
-        // Fallback realistic seed data if server is offline
-        setInventory([
-          { id: '1', sku_code: 'RAW-STL-001', name: 'Structural Steel Bars (12mm)', category: 'Raw Materials', unit_price: 65.50, stock_qty: 450, safety_stock: 100 },
-          { id: '2', sku_code: 'ELEC-SMR-002', name: 'Microcontroller Boards STM32', category: 'Electronics', unit_price: 850.00, stock_qty: 25, safety_stock: 30 },
-          { id: '3', sku_code: 'OFF-PPR-003', name: 'A4 Executive Copy Paper (500s)', category: 'Office Supplies', unit_price: 280.00, stock_qty: 80, safety_stock: 20 }
-        ]);
-        setMetrics({ total_items: 3, low_stock_items: 1 });
+        console.warn('Dashboard telemetry error, fallback applied:', e);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchInventory();
+    fetchDashboardData();
   }, []);
+
+  const totalValuation = inventory.reduce((acc, curr) => acc + (Number(curr.stock_qty) * Number(curr.unit_price)), 0);
 
   return (
     <div className="space-y-6">
@@ -54,138 +57,117 @@ export const Dashboard: React.FC = () => {
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">Executive Operations Dashboard</h2>
           <p className="text-xs text-slate-500 mt-0.5">Real-time organizational telemetry across active departments</p>
         </div>
-        <div className="flex gap-2">
-          <button className="px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
-            Export Report
-          </button>
-          <button className="px-3 py-1.5 bg-indigo-600 rounded-md text-xs font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-500/20">
-            + New Purchase Request
-          </button>
-        </div>
       </div>
 
-      {/* Stripe-style 4 KPI Stat Cards */}
+      {/* KPI Cards (Stripe Style) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-2 font-medium">
-            <span>Quarterly Procurement Spend</span>
-            <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[11px] flex items-center">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> 84% Cap
-            </span>
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Catalog Items</span>
+            <Boxes className="w-4 h-4 text-indigo-500" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
-            ₹4,20,500<span className="text-sm font-normal text-slate-400">.00</span>
-          </div>
-          <div className="mt-3 text-[11px] text-slate-400">
-            Allocated: <span className="font-semibold text-slate-600 font-mono">₹5,00,000.00</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-900 font-mono">{metrics.total_items}</span>
+            <span className="text-xs font-medium text-emerald-600">Active SKUs</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-2 font-medium">
-            <span>Active Requisitions</span>
-            <span className="text-indigo-700 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded text-[11px] flex items-center">
-              <Clock className="w-3 h-3 mr-0.5" /> 3 Pending
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Total Valuation</span>
+            <DollarSign className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-900 font-mono">
+              ₹{totalValuation.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </span>
-          </div>
-          <div className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
-            14 <span className="text-sm font-normal text-slate-400">Orders</span>
-          </div>
-          <div className="mt-3 text-[11px] text-slate-400">
-            Avg Turnaround: <span className="font-semibold text-slate-600 font-mono">1.8 Days</span>
+            <span className="text-xs text-slate-400 font-mono">PostgreSQL</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-2 font-medium">
-            <span>Inventory SKUs Tracked</span>
-            <span className="text-rose-700 font-semibold bg-rose-50 px-1.5 py-0.5 rounded text-[11px] flex items-center">
-              <AlertTriangle className="w-3 h-3 mr-0.5" /> {metrics.low_stock_items} Critical
-            </span>
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Low Stock Alerts</span>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
-            {metrics.total_items} <span className="text-sm font-normal text-slate-400">Master SKUs</span>
-          </div>
-          <div className="mt-3 text-[11px] text-slate-400">
-            Warehouse Capacity: <span className="font-semibold text-slate-600 font-mono">68%</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-amber-600 font-mono">{metrics.low_stock_items}</span>
+            <span className="text-xs text-amber-700">Needs replenishment</span>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-2 font-medium">
-            <span>AI Demand Forecast Status</span>
-            <span className="text-indigo-700 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded text-[11px] flex items-center">
-              Scikit-learn
-            </span>
+        <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">AI Demand Safety</span>
+            <Activity className="w-4 h-4 text-blue-500" />
           </div>
-          <div className="text-2xl font-bold text-emerald-600 tracking-tight font-mono">
-            Optimal <span className="text-sm font-normal text-slate-400">94.2% Acc.</span>
-          </div>
-          <div className="mt-3 text-[11px] text-slate-400">
-            Next Restock Cycle: <span className="font-semibold text-slate-600 font-mono">03 Nov 2026</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-900 font-mono">98.4%</span>
+            <span className="text-xs text-emerald-600">Optimal Buffer</span>
           </div>
         </div>
       </div>
 
-      {/* 3. Custom ENTRIX Workflow Timeline Component */}
-      <WorkflowTimeline currentStage={activeStage} amount={activeAmount} />
-
-      {/* Stripe-style Compact Data Grid: Live Inventory Master */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-800">Master Stock Ledger</h3>
-            <p className="text-xs text-slate-500">Atomic inventory levels synced directly with warehouse GRN receipts</p>
-          </div>
-          <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded">
-            PostgreSQL 16 Synced
-          </span>
+      {/* Visual Component: Procurement Pipeline */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">
+            {recentPR ? `Latest Requisition Pipeline (${recentPR.pr_code})` : 'Active Procurement Pipeline Visualizer'}
+          </h3>
+          <span className="text-xs font-mono text-indigo-600 font-medium">State Machine Engine</span>
         </div>
+        <WorkflowTimeline currentStage={activeStage} amount={activeAmount} />
+      </div>
 
+      {/* Inventory Table (Stripe Style) */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">Warehouse Inventory Items</h3>
+          <span className="text-xs text-slate-400 font-mono">Real-time Stock</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-mono text-[10px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
               <tr>
                 <th className="py-2.5 px-4 font-semibold">SKU Code</th>
-                <th className="py-2.5 px-4 font-semibold">Description</th>
+                <th className="py-2.5 px-4 font-semibold">Item Name</th>
                 <th className="py-2.5 px-4 font-semibold">Category</th>
                 <th className="py-2.5 px-4 font-semibold text-right">Unit Price</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Stock on Hand</th>
+                <th className="py-2.5 px-4 font-semibold text-right">Stock Qty</th>
                 <th className="py-2.5 px-4 font-semibold text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {inventory.map((item) => {
-                const isCritical = item.stock_qty <= item.safety_stock;
-                return (
-                  <tr key={item.sku_code} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 font-mono font-medium text-slate-900">{item.sku_code}</td>
-                    <td className="py-3 px-4 font-medium text-slate-800">{item.name}</td>
-                    <td className="py-3 px-4 text-slate-500">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">
-                        {item.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right font-mono text-slate-800 font-medium">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-slate-400">Loading inventory records...</td>
+                </tr>
+              ) : inventory.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-slate-400">No inventory items found.</td>
+                </tr>
+              ) : (
+                inventory.map((item) => (
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-4 font-mono font-medium text-indigo-600">{item.sku_code}</td>
+                    <td className="py-3 px-4 font-medium text-slate-900">{item.name}</td>
+                    <td className="py-3 px-4 text-slate-500">{item.category}</td>
+                    <td className="py-3 px-4 text-right font-mono text-slate-900 font-semibold">
                       ₹{Number(item.unit_price).toFixed(2)}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
-                      {item.stock_qty} <span className="text-[10px] text-slate-400 font-normal">{item.unit_of_measure}</span>
-                    </td>
+                    <td className="py-3 px-4 text-right font-mono font-semibold">{item.stock_qty}</td>
                     <td className="py-3 px-4 text-center">
-                      {isCritical ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                          <AlertTriangle className="w-3 h-3" /> Reorder Triggered
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle className="w-3 h-3" /> In Stock
-                        </span>
-                      )}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
+                        item.stock_qty <= item.safety_stock
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      }`}>
+                        {item.stock_qty <= item.safety_stock ? 'Low Stock' : 'Optimal'}
+                      </span>
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -193,3 +175,5 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+export default Dashboard;

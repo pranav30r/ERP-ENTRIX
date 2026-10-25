@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import { sequelize } from '../config/db';
 
 // 1. Department Model
@@ -59,7 +59,29 @@ User.init({
   locked_until: { type: DataTypes.DATE, allowNull: true }
 }, { sequelize, tableName: 'users', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-// 4. InventoryItem Model
+// 4. Employee Model
+export class Employee extends Model {
+  declare public id: string;
+  declare public user_id: string;
+  declare public employee_code: string;
+  declare public designation: string;
+  declare public joining_date: Date;
+  declare public base_salary: number;
+  declare public annual_leave_balance: number;
+  declare public readonly created_at: Date;
+  declare public readonly updated_at: Date;
+}
+Employee.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  user_id: { type: DataTypes.UUID, unique: true, allowNull: false },
+  employee_code: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  designation: { type: DataTypes.STRING(64), allowNull: false },
+  joining_date: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW },
+  base_salary: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  annual_leave_balance: { type: DataTypes.INTEGER, defaultValue: 18 }
+}, { sequelize, tableName: 'employees', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
+
+// 5. InventoryItem Model
 export class InventoryItem extends Model {
   declare public id: string;
   declare public sku_code: string;
@@ -83,7 +105,7 @@ InventoryItem.init({
   safety_stock: { type: DataTypes.INTEGER, defaultValue: 10 }
 }, { sequelize, tableName: 'inventory_items', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-// 5. PurchaseRequest Model
+// 6. PurchaseRequest Model
 export class PurchaseRequest extends Model {
   declare public id: string;
   declare public pr_code: string;
@@ -114,7 +136,66 @@ PurchaseRequest.init({
   rejection_reason: { type: DataTypes.TEXT, allowNull: true }
 }, { sequelize, tableName: 'purchase_requests', timestamps: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
-// 6. AuditLog Model
+// 7. PurchaseOrder Model
+export class PurchaseOrder extends Model {
+  declare public id: string;
+  declare public po_number: string;
+  declare public pr_id: string;
+  declare public vendor_name: string;
+  declare public ordered_quantity: number;
+  declare public total_amount: number;
+  declare public issued_date: Date;
+  declare public readonly created_at: Date;
+}
+PurchaseOrder.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  po_number: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  pr_id: { type: DataTypes.UUID, unique: true, allowNull: false },
+  vendor_name: { type: DataTypes.STRING(128), allowNull: false },
+  ordered_quantity: { type: DataTypes.INTEGER, allowNull: false },
+  total_amount: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+  issued_date: { type: DataTypes.DATEONLY, defaultValue: DataTypes.NOW }
+}, { sequelize, tableName: 'purchase_orders', timestamps: true, createdAt: 'created_at', updatedAt: false });
+
+// 8. GoodsReceivedNote Model
+export class GoodsReceivedNote extends Model {
+  declare public id: string;
+  declare public grn_code: string;
+  declare public po_id: string;
+  declare public received_quantity: number;
+  declare public verified_by: string;
+  declare public readonly received_at: Date;
+}
+GoodsReceivedNote.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  grn_code: { type: DataTypes.STRING(32), unique: true, allowNull: false },
+  po_id: { type: DataTypes.UUID, allowNull: false },
+  received_quantity: { type: DataTypes.INTEGER, allowNull: false },
+  verified_by: { type: DataTypes.UUID, allowNull: false }
+}, { sequelize, tableName: 'goods_received_notes', timestamps: true, createdAt: 'received_at', updatedAt: false });
+
+// 9. LedgerEntry Model
+export class LedgerEntry extends Model {
+  declare public id: number;
+  declare public transaction_uuid: string;
+  declare public account_code: string;
+  declare public debit_amount: number;
+  declare public credit_amount: number;
+  declare public reference_type: string | null;
+  declare public reference_id: string | null;
+  declare public readonly posted_at: Date;
+}
+LedgerEntry.init({
+  id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
+  transaction_uuid: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4 },
+  account_code: { type: DataTypes.STRING(32), allowNull: false },
+  debit_amount: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
+  credit_amount: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0.00 },
+  reference_type: { type: DataTypes.STRING(32), allowNull: true },
+  reference_id: { type: DataTypes.UUID, allowNull: true }
+}, { sequelize, tableName: 'ledger_entries', timestamps: true, createdAt: 'posted_at', updatedAt: false });
+
+// 10. AuditLog Model
 export class AuditLog extends Model {
   declare public id: number;
   declare public actor_id: string | null;
@@ -140,6 +221,16 @@ AuditLog.init({
 // Relationships
 User.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 User.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
+User.hasOne(Employee, { foreignKey: 'user_id', as: 'employee' });
+Employee.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
 PurchaseRequest.belongsTo(User, { foreignKey: 'requester_id', as: 'requester' });
 PurchaseRequest.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
 PurchaseRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
+PurchaseRequest.hasOne(PurchaseOrder, { foreignKey: 'pr_id', as: 'purchase_order' });
+
+PurchaseOrder.belongsTo(PurchaseRequest, { foreignKey: 'pr_id', as: 'purchase_request' });
+PurchaseOrder.hasMany(GoodsReceivedNote, { foreignKey: 'po_id', as: 'grns' });
+
+GoodsReceivedNote.belongsTo(PurchaseOrder, { foreignKey: 'po_id', as: 'purchase_order' });
+GoodsReceivedNote.belongsTo(User, { foreignKey: 'verified_by', as: 'verifier' });

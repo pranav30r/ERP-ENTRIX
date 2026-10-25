@@ -23,6 +23,7 @@ npm-debug.log*
 yarn-debug.log*
 data/
 *.sqlite
+deploy/backups/*.sql
 
 # IDE & OS
 .vscode/

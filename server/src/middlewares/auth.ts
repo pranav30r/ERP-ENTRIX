@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { ENV } from '../config/env';
 
 export interface UserPayload {
   id: string;
@@ -22,7 +23,7 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
   }
 
   const token = authHeader.split(' ')[1];
-  const jwtSecret = process.env.JWT_SECRET || 'super_secret_jwt_key_entrix_2026_change_in_production';
+  const jwtSecret = ENV.JWT_SECRET;
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as UserPayload;

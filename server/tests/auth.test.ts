@@ -43,4 +43,16 @@ describe('Auth & Healthcheck API', () => {
     expect(res.status).toBe(401);
     expect(res.body.success).toBe(false);
   });
+
+  it('POST /api/v1/auth/login exposes RateLimit security headers from authLimiter', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .send({
+        email: 'admin@entrix.local',
+        password: 'Admin@123'
+      });
+
+    expect(res.headers['ratelimit-limit']).toBeDefined();
+    expect(res.headers['ratelimit-remaining']).toBeDefined();
+  });
 });

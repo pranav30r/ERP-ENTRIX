@@ -14,6 +14,8 @@ import auditRoutes from './routes/auditRoutes';
 import financeRoutes from './routes/financeRoutes';
 import hrRoutes from './routes/hrRoutes';
 import aiRoutes from './routes/aiRoutes';
+import { ENV } from './config/env';
+import { apiLimiter } from './middlewares/rateLimiter';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
@@ -21,11 +23,11 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.io
+// Initialize Socket.io with restricted CORS origins
 const io = new SocketIOServer(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: ENV.ALLOWED_ORIGINS,
+    methods: ['GET', 'POST'],
     credentials: true
   }
 });
@@ -33,10 +35,20 @@ const io = new SocketIOServer(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: true, // Allow any origin in local development (localhost & 127.0.0.1)
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow non-browser agents (cURL, mobile clients, server-to-server) or whitelisted origins
+    if (!origin || ENV.ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: Origin ${origin} not permitted`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+app.use('/api/v1', apiLimiter);
 
 // Pass Socket.io to request object
 app.use((req: any, res, next) => {

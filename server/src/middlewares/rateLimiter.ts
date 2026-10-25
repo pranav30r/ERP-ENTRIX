@@ -1,19 +1,23 @@
 import rateLimit from 'express-rate-limit';
 
 export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts
-  standardHeaders: true,
-  legacyHeaders: false,
+  windowMs: 15 * 60 * 1000, // 15-minute window
+  max: process.env.NODE_ENV === 'test' ? 1000 : 15, // Max 15 login attempts per window per IP in development/production
+  standardHeaders: true, // Return RateLimit-* headers
+  legacyHeaders: false, // Disable X-RateLimit-* headers
   message: {
     success: false,
-    error: 'Too many login attempts from this IP, please try again after 15 minutes.'
+    error: 'Too many authentication attempts. Please try again after 15 minutes.'
   }
 });
 
 export const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 120, // 120 requests per minute
+  windowMs: 1 * 60 * 1000, // 1-minute window
+  max: process.env.NODE_ENV === 'test' ? 5000 : 300, // 300 requests per minute general API limit
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'API rate limit exceeded. Please throttle your requests.'
+  }
 });

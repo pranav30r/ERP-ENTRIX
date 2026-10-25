@@ -3,9 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User, Role, Department } from '../models';
 import { AuthRequest } from '../middlewares/auth';
+import { ENV } from '../config/env';
 
-const jwtSecret = process.env.JWT_SECRET || 'super_secret_jwt_key_entrix_2026_change_in_production';
-const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '15m';
+const jwtSecret = ENV.JWT_SECRET;
+const jwtExpiresIn = ENV.JWT_EXPIRES_IN;
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {

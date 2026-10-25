@@ -1,0 +1,14 @@
+# ENTRIX Enterprise Resource Planning Platform
+# Academic Prototype - Disallow Crawling of Internal ERP Portals
+
+User-agent: *
+Disallow: /api/
+Disallow: /procurement
+Disallow: /inventory
+Disallow: /finance
+Disallow: /hr
+Disallow: /ai-insights
+Disallow: /audit
+Disallow: /projects
+
+Sitemap: https://entrix-erp.local/sitemap.xml

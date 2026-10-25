@@ -132,10 +132,3 @@ npm --prefix client run build
 
 ---
 
-## 👥 Authors & Academic Attribution
-- **Aditya Sakarkar**
-- **Chetan Gupta**
-- **Pranav Rathi**
-
-*Ramdeobaba University, Nagpur — Department of Computer Science & Engineering (Session 2026–27)*
-*B.Tech CSE Semester V Capstone Project*

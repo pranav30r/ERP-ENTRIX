@@ -11,6 +11,8 @@ import inventoryRoutes from './routes/inventoryRoutes';
 import procurementRoutes from './routes/procurementRoutes';
 import projectRoutes from './routes/projectRoutes';
 import auditRoutes from './routes/auditRoutes';
+import financeRoutes from './routes/financeRoutes';
+import hrRoutes from './routes/hrRoutes';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
@@ -21,7 +23,7 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = new SocketIOServer(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
@@ -30,7 +32,7 @@ const io = new SocketIOServer(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: true, // Allow any origin in local development (localhost & 127.0.0.1)
   credentials: true
 }));
 app.use(express.json());
@@ -47,6 +49,8 @@ app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/procurement', procurementRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/finance', financeRoutes);
+app.use('/api/v1/hr', hrRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

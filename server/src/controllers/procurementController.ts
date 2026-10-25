@@ -32,6 +32,10 @@ export const createPurchaseRequest = async (req: Request, res: Response): Promis
       justification: justification || 'Operational replenishment'
     });
 
+    if ((req as any).io) {
+      (req as any).io.emit('pr_created', { pr, message: `New Requisition ${pr_code} submitted.` });
+    }
+
     res.status(201).json({
       success: true,
       data: pr,
@@ -89,6 +93,10 @@ export const managerApproval = async (req: Request, res: Response): Promise<void
     pr.status = nextStatus;
     await pr.save();
 
+    if ((req as any).io) {
+      (req as any).io.emit('pr_status_changed', { pr, stage: nextStatus, message: `Requisition ${pr.pr_code} moved to ${nextStatus}.` });
+    }
+
     res.status(200).json({
       success: true,
       message: nextStatus === 'APPROVED' ? 'Approved directly (Under ₹10k threshold)' : 'Advanced to Finance Approval',
@@ -126,6 +134,10 @@ export const financeApproval = async (req: Request, res: Response): Promise<void
     pr.status = 'APPROVED';
     await pr.save();
 
+    if ((req as any).io) {
+      (req as any).io.emit('pr_status_changed', { pr, stage: 'APPROVED', message: `Requisition ${pr.pr_code} approved by Finance.` });
+    }
+
     res.status(200).json({ success: true, message: 'Finance sign-off complete. Approved.', data: pr });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Error processing finance approval.' });
@@ -161,6 +173,10 @@ export const receiveGoods = async (req: Request, res: Response): Promise<void> =
     await pr.save({ transaction });
 
     await transaction.commit();
+
+    if ((req as any).io) {
+      (req as any).io.emit('grn_received', { pr, message: `Goods received & stock incremented for ${pr.pr_code}.` });
+    }
 
     res.status(200).json({
       success: true,

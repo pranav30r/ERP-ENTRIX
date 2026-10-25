@@ -6,17 +6,23 @@ import { Button } from '../components/ui/Button';
 export const HR: React.FC = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [forbiddenError, setForbiddenError] = useState<string | null>(null);
 
   const fetchEmployees = async () => {
     setLoading(true);
+    setForbiddenError(null);
     try {
       await ensureAuthenticated();
       const res = await apiClient.get('/hr/employees');
       if (res.data.success && Array.isArray(res.data.data)) {
         setEmployees(res.data.data);
       }
-    } catch (err) {
-      console.error('Failed to load employee directory:', err);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setForbiddenError(err.response?.data?.error || 'Access Forbidden. Role does not have permission to view employee roster.');
+      } else {
+        console.error('Failed to load employee directory:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -42,7 +48,17 @@ export const HR: React.FC = () => {
       </div>
 
       {/* Directory Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      {forbiddenError ? (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+            403
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-[11px] text-slate-400 block">Switch to HR Manager or Super Admin in the top-right header to view employee records.</span>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-800">Employee Organizational Directory</h3>
           <span className="text-xs text-slate-400 font-mono">{employees.length} Active Personnel</span>
@@ -94,6 +110,7 @@ export const HR: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

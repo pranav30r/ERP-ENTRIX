@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, ShieldCheck, ChevronDown, UserCheck } from 'lucide-react';
 import { getSocket } from '../services/socket';
+import { getCurrentUser, loginAsUser } from '../services/api';
 
-interface HeaderProps {
-  user?: {
-    first_name: string;
-    last_name: string;
-    role: string;
-    email: string;
-  };
-}
+const demoRoles = [
+  { name: 'Aditya Admin', email: 'admin@entrix.local', role: 'SUPER_ADMIN', desc: 'Full System Control' },
+  { name: 'Sarah Jenkins', email: 'hr@entrix.local', role: 'HR_MANAGER', desc: 'Personnel & Attendance' },
+  { name: 'Rajesh Menon', email: 'finance@entrix.local', role: 'FINANCE_OFFICER', desc: 'Ledger & PR Sign-off' },
+  { name: 'Kavita Rao', email: 'procurement@entrix.local', role: 'PROCUREMENT_OFFICER', desc: 'PO & Stock Adjustments' },
+  { name: 'Vikram Mehta', email: 'staff@entrix.local', role: 'STAFF_USER', desc: 'Requisition Submitter Only' }
+];
 
-export const Header: React.FC<HeaderProps> = ({ user }) => {
+export const Header: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState(getCurrentUser());
   const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
+    setCurrentUser(getCurrentUser());
     const socket = getSocket();
 
     const handleConnect = () => setIsConnected(true);
@@ -59,6 +63,19 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
     };
   }, []);
 
+  const handleRoleSelect = async (roleEmail: string) => {
+    setSwitching(true);
+    try {
+      await loginAsUser(roleEmail, 'Admin@123');
+      setShowRoleSwitcher(false);
+      window.location.reload();
+    } catch (err) {
+      alert('Failed to switch role.');
+    } finally {
+      setSwitching(false);
+    }
+  };
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       {/* Search Input (Stripe style) */}
@@ -93,9 +110,6 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
           >
             <Bell className="w-4 h-4" />
             {notifications.length > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
-            )}
-            {notifications.length > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-600"></span>
             )}
           </button>
@@ -126,19 +140,66 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
 
         <div className="h-4 w-px bg-slate-200"></div>
 
-        {/* User Badge */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-indigo-500/20">
-            {user ? `${user.first_name[0]}${user.last_name[0]}` : 'AS'}
-          </div>
-          <div className="text-left hidden md:block">
-            <p className="text-xs font-semibold text-slate-800">
-              {user ? `${user.first_name} ${user.last_name}` : 'Aditya Sakarkar'}
-            </p>
-            <p className="text-[10px] text-slate-500 font-mono">
-              {user ? user.role : 'SUPER_ADMIN'}
-            </p>
-          </div>
+        {/* User Badge with Interactive RBAC Role Switcher */}
+        <div className="relative">
+          <button
+            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+            className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200 text-left"
+          >
+            <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm shadow-indigo-500/20">
+              {currentUser.first_name ? currentUser.first_name[0] : 'U'}
+            </div>
+            <div className="hidden md:block">
+              <div className="flex items-center gap-1">
+                <p className="text-xs font-semibold text-slate-800">
+                  {currentUser.first_name} {currentUser.last_name}
+                </p>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </div>
+              <span className="inline-block text-[10px] px-1.5 py-0.2 rounded font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {currentUser.role}
+              </span>
+            </div>
+          </button>
+
+          {showRoleSwitcher && (
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-in fade-in zoom-in-95">
+              <div className="p-3 bg-slate-50 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Switch RBAC Persona</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">Test granular permissions across roles</p>
+              </div>
+
+              <div className="p-1 space-y-0.5 max-h-72 overflow-y-auto">
+                {demoRoles.map((r) => {
+                  const isActive = currentUser.email === r.email;
+                  return (
+                    <button
+                      key={r.email}
+                      disabled={switching}
+                      onClick={() => handleRoleSelect(r.email)}
+                      className={`w-full text-left p-2.5 rounded-lg text-xs transition-colors flex items-start justify-between ${
+                        isActive 
+                          ? 'bg-indigo-50/80 border border-indigo-200' 
+                          : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-slate-800">{r.name}</span>
+                          {isActive && <UserCheck className="w-3 h-3 text-indigo-600" />}
+                        </div>
+                        <span className="text-[10px] text-indigo-600 font-mono font-bold block">{r.role}</span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">{r.desc}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

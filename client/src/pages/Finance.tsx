@@ -7,9 +7,11 @@ export const Finance: React.FC = () => {
   const [entries, setEntries] = useState<any[]>([]);
   const [summary, setSummary] = useState({ total_debits: 0, total_credits: 0, is_balanced: true });
   const [loading, setLoading] = useState(true);
+  const [forbiddenError, setForbiddenError] = useState<string | null>(null);
 
   const fetchLedger = async () => {
     setLoading(true);
+    setForbiddenError(null);
     try {
       await ensureAuthenticated();
       const res = await apiClient.get('/finance/ledger');
@@ -19,8 +21,12 @@ export const Finance: React.FC = () => {
           setSummary(res.data.summary);
         }
       }
-    } catch (err) {
-      console.error('Failed to load ledger postings:', err);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setForbiddenError(err.response?.data?.error || 'Access Forbidden. Role does not have permission to view financial ledger.');
+      } else {
+        console.error('Failed to load ledger postings:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -62,8 +68,19 @@ export const Finance: React.FC = () => {
         </div>
       </div>
 
-      {/* 2 Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {forbiddenError ? (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+            403
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-[11px] text-slate-400 block">Switch to Finance Officer or Super Admin in the top-right header to view ledgers.</span>
+        </div>
+      ) : (
+        <>
+          {/* 2 Stat Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span>Total Debits Posted</span>
@@ -133,6 +150,8 @@ export const Finance: React.FC = () => {
           </table>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

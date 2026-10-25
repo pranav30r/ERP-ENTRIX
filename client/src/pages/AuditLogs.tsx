@@ -19,9 +19,11 @@ export const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [integrity, setIntegrity] = useState<{ valid: boolean; total_checked: number }>({ valid: true, total_checked: 0 });
   const [loading, setLoading] = useState(true);
+  const [forbiddenError, setForbiddenError] = useState<string | null>(null);
 
   const fetchAuditLogs = async () => {
     setLoading(true);
+    setForbiddenError(null);
     try {
       await ensureAuthenticated();
       const res = await apiClient.get('/audit');
@@ -31,8 +33,12 @@ export const AuditLogs: React.FC = () => {
           setIntegrity(res.data.integrity);
         }
       }
-    } catch (err) {
-      console.error('Failed to fetch audit logs:', err);
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setForbiddenError(err.response?.data?.error || 'Access Forbidden. Role does not have permission to view audit logs.');
+      } else {
+        console.error('Failed to fetch audit logs:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -74,7 +80,17 @@ export const AuditLogs: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      {forbiddenError ? (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
+            403
+          </div>
+          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-[11px] text-slate-400 block">Switch to a Super Admin account in the top-right header to inspect audit blocks.</span>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-slate-800">Immutable State Mutating Events (PostgreSQL B-Tree)</h3>
           <span className="text-xs text-slate-400 font-mono">{logs.length} Live Audit Blocks</span>
@@ -131,6 +147,7 @@ export const AuditLogs: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

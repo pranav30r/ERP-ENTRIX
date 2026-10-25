@@ -181,11 +181,15 @@ INSERT INTO departments (id, code, name, quarterly_budget) VALUES
 ('44444444-4444-4444-4444-444444444444', 'DEPT-PROC', 'Procurement & Logistics', 600000.00)
 ON CONFLICT (code) DO NOTHING;
 
--- 3. Insert Default Super Admin User (password: Admin@123)
+-- 3. Insert Core Users (password: Admin@123 for all demo accounts)
 -- bcrypt hash for 'Admin@123' with 10 rounds: $2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK
 INSERT INTO users (id, email, password_hash, first_name, last_name, role_id, department_id) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Aditya', 'Admin', 1, '11111111-1111-1111-1111-111111111111')
-ON CONFLICT (email) DO NOTHING;
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'admin@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Aditya', 'Admin', 1, '11111111-1111-1111-1111-111111111111'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02', 'hr@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Sarah', 'Jenkins', 2, '22222222-2222-2222-2222-222222222222'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa03', 'finance@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Rajesh', 'Menon', 3, '33333333-3333-3333-3333-333333333333'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa04', 'procurement@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Kavita', 'Rao', 4, '44444444-4444-4444-4444-444444444444'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa05', 'staff@entrix.local', '$2a$10$YZiaj22gCicCjhVsuiO6xeYdNoO3mYdspAKjVPqfflCHb6JiCquqK', 'Vikram', 'Mehta', 5, '11111111-1111-1111-1111-111111111111')
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role_id = EXCLUDED.role_id;
 
 -- 4. Insert Initial Inventory Seed Items
 INSERT INTO inventory_items (id, sku_code, name, category, unit_of_measure, unit_price, stock_qty, safety_stock) VALUES

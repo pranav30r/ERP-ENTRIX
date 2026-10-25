@@ -3,6 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './pages/Dashboard';
+import { Procurement } from './pages/Procurement';
+import { AIInsights } from './pages/AIInsights';
+import { Finance } from './pages/Finance';
+import { HR } from './pages/HR';
+import { NotFound } from './pages/NotFound';
 
 export const App: React.FC = () => {
   return (
@@ -20,7 +25,11 @@ export const App: React.FC = () => {
           <main className="p-8 max-w-7xl w-full mx-auto">
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="*" element={<Dashboard />} />
+              <Route path="/procurement" element={<Procurement />} />
+              <Route path="/ai-insights" element={<AIInsights />} />
+              <Route path="/finance" element={<Finance />} />
+              <Route path="/hr" element={<HR />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
         </div>

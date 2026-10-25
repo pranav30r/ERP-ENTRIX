@@ -8,6 +8,7 @@ import { AIInsights } from './pages/AIInsights';
 import { Finance } from './pages/Finance';
 import { HR } from './pages/HR';
 import { Projects } from './pages/Projects';
+import { AuditLogs } from './pages/AuditLogs';
 import { NotFound } from './pages/NotFound';
 
 export const App: React.FC = () => {
@@ -31,6 +32,7 @@ export const App: React.FC = () => {
               <Route path="/finance" element={<Finance />} />
               <Route path="/hr" element={<HR />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/audit" element={<AuditLogs />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

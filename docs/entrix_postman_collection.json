@@ -1,0 +1,320 @@
+{
+  "info": {
+    "name": "ENTRIX ERP - REST API Collection",
+    "_postman_id": "c1f7b889-4a30-4e36-b7f2-e56314c1945a",
+    "description": "Comprehensive Postman API collection for ENTRIX ERP platform. Covers Authentication, Procurement 8-stage state machine, Inventory SKU Master, AI Forecasting Microservices, Project Burndown, and Cryptographic SHA-256 Audit Trail.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "aiUrl",
+      "value": "http://localhost:8008",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & RBAC",
+      "item": [
+        {
+          "name": "POST Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.token) {",
+                  "    pm.collectionVariables.set('authToken', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@entrix.local\",\n  \"password\": \"AdminSecure2026!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "GET Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Inventory Master",
+      "item": [
+        {
+          "name": "GET All SKUs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"]
+            }
+          }
+        },
+        {
+          "name": "POST Create SKU Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"RAW-ALU-002\",\n  \"name\": \"Aircraft Grade 6061 Aluminum Billet\",\n  \"category\": \"Raw Materials\",\n  \"quantity_on_hand\": 120,\n  \"reorder_point\": 30,\n  \"safety_stock\": 15,\n  \"unit_price\": 450.00,\n  \"location\": \"Bay-B2-Shelf1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/inventory",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "inventory"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Procurement State Machine",
+      "item": [
+        {
+          "name": "GET Purchase Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/procurement/purchase-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "procurement", "purchase-requests"]
+            }
+          }
+        },
+        {
+          "name": "POST Create Purchase Requisition (PR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": 1,\n  \"quantity\": 50,\n  \"estimated_unit_price\": 125.50,\n  \"justification\": \"Refill safety buffer for Q4 automated production line.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/procurement/purchase-requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "procurement", "purchase-requests"]
+            }
+          }
+        },
+        {
+          "name": "POST Approve Requisition (Manager)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"comments\": \"Operational requirement verified against production target.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/procurement/purchase-requests/1/approval",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "procurement", "purchase-requests", "1", "approval"]
+            }
+          }
+        },
+        {
+          "name": "POST Record Goods Received Note (GRN Stock Increment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchase_order_id\": 1,\n  \"received_quantity\": 50,\n  \"inspection_status\": \"ACCEPTED\",\n  \"remarks\": \"100% QA inspected, zero structural defects.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/procurement/grn",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "procurement", "grn"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. AI Decision Microservice (FastAPI)",
+      "item": [
+        {
+          "name": "POST ML Demand Forecast (Random Forest)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_id\": 1,\n  \"history\": [10, 12, 15, 14, 18, 22, 20, 25, 24, 28, 30, 32, 29, 35, 40, 38, 42, 45, 44, 48, 50, 52, 51, 55, 60, 58, 62, 65, 64, 70],\n  \"forecast_horizon_days\": 30\n}"
+            },
+            "url": {
+              "raw": "{{aiUrl}}/api/v1/ml/forecast/demand",
+              "host": ["{{aiUrl}}"],
+              "path": ["api", "v1", "ml", "forecast", "demand"]
+            }
+          }
+        },
+        {
+          "name": "POST Isolation Forest Anomaly Detection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactions\": [\n    {\"id\": 1, \"amount\": 250.0, \"department_id\": 1},\n    {\"id\": 2, \"amount\": 310.0, \"department_id\": 1},\n    {\"id\": 3, \"amount\": 420.0, \"department_id\": 1},\n    {\"id\": 4, \"amount\": 98500.0, \"department_id\": 1}\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{aiUrl}}/api/v1/ml/anomaly/detect-expense",
+              "host": ["{{aiUrl}}"],
+              "path": ["api", "v1", "ml", "anomaly", "detect-expense"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Audit & Cryptographic Chain",
+      "item": [
+        {
+          "name": "GET Cryptographic Audit Log Entries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/logs?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "audit", "logs"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Verify SHA-256 Hash Chain Integrity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/audit/verify-chain",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "audit", "verify-chain"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

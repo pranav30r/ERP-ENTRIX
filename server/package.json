@@ -8,7 +8,8 @@
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "test": "jest --runInBand --forceExit",
-    "db:init": "node dist/db/initDb.js"
+    "db:init": "node dist/db/initDb.js",
+    "db:migrate": "node dist/db/migrate.js"
   },
   "dependencies": {
     "axios": "^1.20.0",

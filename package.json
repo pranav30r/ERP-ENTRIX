@@ -12,7 +12,8 @@
     "dev:client": "npm --prefix client run dev",
     "build": "npm --prefix client run build && npm --prefix server run build",
     "test": "npm --prefix server test",
-    "db:init": "npm --prefix server run db:init"
+    "db:init": "npm --prefix server run db:init",
+    "db:migrate": "npm --prefix server run db:migrate"
   },
   "keywords": [
     "erp",

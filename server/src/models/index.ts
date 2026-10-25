@@ -218,11 +218,32 @@ AuditLog.init({
   current_hash: { type: DataTypes.STRING(64), allowNull: false }
 }, { sequelize, tableName: 'audit_logs', timestamps: false });
 
+// 11. RefreshToken Model
+export class RefreshToken extends Model {
+  declare public id: string;
+  declare public user_id: string;
+  declare public token_hash: string;
+  declare public expires_at: Date;
+  declare public revoked_at: Date | null;
+  declare public replaced_by_token_hash: string | null;
+  declare public readonly created_at: Date;
+}
+RefreshToken.init({
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  user_id: { type: DataTypes.UUID, allowNull: false },
+  token_hash: { type: DataTypes.STRING(64), unique: true, allowNull: false },
+  expires_at: { type: DataTypes.DATE, allowNull: false },
+  revoked_at: { type: DataTypes.DATE, allowNull: true },
+  replaced_by_token_hash: { type: DataTypes.STRING(64), allowNull: true }
+}, { sequelize, tableName: 'refresh_tokens', timestamps: true, createdAt: 'created_at', updatedAt: false });
+
 // Relationships
 User.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
 User.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
 User.hasOne(Employee, { foreignKey: 'user_id', as: 'employee' });
 Employee.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(RefreshToken, { foreignKey: 'user_id', as: 'refresh_tokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 PurchaseRequest.belongsTo(User, { foreignKey: 'requester_id', as: 'requester' });
 PurchaseRequest.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });

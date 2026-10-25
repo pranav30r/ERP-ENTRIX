@@ -49,7 +49,16 @@ export const createPurchaseRequest = async (req: Request, res: Response): Promis
 
 export const getPurchaseRequests = async (req: Request, res: Response): Promise<void> => {
   try {
+    const authUser = (req as any).user;
+    const whereClause: any = {};
+
+    // Department / Tenant Isolation: standard staff users only see their own requests
+    if (authUser && authUser.role_name === 'STAFF_USER') {
+      whereClause.requester_id = authUser.id;
+    }
+
     const requests = await PurchaseRequest.findAll({
+      where: whereClause,
       include: [
         { model: User, as: 'requester', attributes: ['id', 'first_name', 'last_name', 'email'] },
         { model: Department, as: 'department', attributes: ['id', 'code', 'name'] },
@@ -66,12 +75,19 @@ export const getPurchaseRequests = async (req: Request, res: Response): Promise<
 
 export const managerApproval = async (req: Request, res: Response): Promise<void> => {
   try {
+    const authUser = (req as any).user;
     const { id } = req.params;
     const { action, comments } = req.body; // 'APPROVE' | 'REJECT'
 
     const pr = await PurchaseRequest.findByPk(id);
     if (!pr) {
       res.status(404).json({ success: false, error: 'Purchase request not found.' });
+      return;
+    }
+
+    // Department Isolation: Department leads cannot approve requisitions outside their department
+    if (authUser && authUser.role_name === 'HR_MANAGER' && authUser.department_id && pr.department_id !== authUser.department_id) {
+      res.status(403).json({ success: false, error: 'Access denied: Department isolation policy restricts approval to own department requisitions.' });
       return;
     }
 

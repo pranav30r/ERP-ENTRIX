@@ -1,24 +1,14 @@
-import fs from 'fs';
-import path from 'path';
 import { sequelize } from '../config/db';
+import { runMigrations } from './migrate';
 
+/**
+ * Initializes database safely using versioned, non-destructive migrations.
+ * Preserves all existing business data and records execution state in schema_migrations.
+ */
 export const initializeDatabase = async (): Promise<void> => {
-  const candidates = [
-    path.resolve(__dirname, 'schema.sql'),
-    path.resolve(__dirname, '../../src/db/schema.sql'),
-    path.resolve(__dirname, '../src/db/schema.sql'),
-    path.resolve(process.cwd(), 'src/db/schema.sql'),
-    path.resolve(process.cwd(), 'server/src/db/schema.sql')
-  ];
-
-  const schemaPath = candidates.find((p) => fs.existsSync(p));
-  if (!schemaPath) {
-    throw new Error(`schema.sql not found in candidate paths: ${candidates.join(', ')}`);
-  }
-
-  const sql = fs.readFileSync(schemaPath, 'utf8');
-  await sequelize.query(sql);
-  console.log(`[DB] Database schema and initial seeds applied successfully from ${schemaPath}`);
+  console.log('[DB] Running versioned database migrations...');
+  const result = await runMigrations();
+  console.log(`[DB] Database ready. Applied ${result.appliedCount} new migration(s).`);
 };
 
 if (require.main === module) {

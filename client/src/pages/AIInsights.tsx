@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import {
   XAxis,
   YAxis,
@@ -10,6 +9,7 @@ import {
   Area
 } from 'recharts';
 import { AlertTriangle, Cpu } from 'lucide-react';
+import { apiClient, ensureAuthenticated } from '../services/api';
 
 export const AIInsights: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
@@ -19,23 +19,25 @@ export const AIInsights: React.FC = () => {
   useEffect(() => {
     const fetchAI = async () => {
       try {
-        // Fetch 30-day forecast from FastAPI AI Microservice
-        const forecastRes = await axios.post('http://localhost:8008/api/v1/ml/forecast/demand', {
+        await ensureAuthenticated();
+        // Fetch 14-day forecast via Enterprise Gateway
+        const forecastRes = await apiClient.post('/ai/forecast', {
           sku_id: 'RAW-STL-001',
           horizon_days: 14
         });
 
-        const formatted = forecastRes.data.forecast.map((val: number, idx: number) => ({
+        const forecastArray = forecastRes.data.forecast || [];
+        const formatted = forecastArray.map((val: number, idx: number) => ({
           day: `Day ${idx + 1}`,
           demand: val,
-          safety: val * 1.2
+          safety: Math.round(val * 1.2 * 10) / 10
         }));
 
         setForecastData(formatted);
-        setReorderQty(forecastRes.data.recommended_reorder_qty);
+        setReorderQty(forecastRes.data.recommended_reorder_qty || 620);
 
         // Fetch anomaly detection
-        const anomalyRes = await axios.post('http://localhost:8008/api/v1/ml/anomaly/detect-expense', {
+        const anomalyRes = await apiClient.post('/ai/anomalies', {
           transactions: [
             { id: 'TX-901', amount: 1450, department_code: 'DEPT-ENG', vendor_name: 'Apex Steel', hour_of_day: 14, is_weekend: false },
             { id: 'TX-902', amount: 2100, department_code: 'DEPT-ENG', vendor_name: 'Apex Steel', hour_of_day: 10, is_weekend: false },
@@ -44,7 +46,7 @@ export const AIInsights: React.FC = () => {
           ]
         });
 
-        setAnomalies(anomalyRes.data.flagged_records);
+        setAnomalies(anomalyRes.data.flagged_records || []);
       } catch (err) {
         console.warn('AI microservice connecting or using default telemetry...');
         const mockDays = Array.from({ length: 14 }, (_, i) => ({

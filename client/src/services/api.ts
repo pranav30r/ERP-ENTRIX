@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:5000/api/v1';
-export const AI_BASE_URL = 'http://localhost:8008/api/v1/ml';
+export const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+export const AI_BASE_URL = (import.meta as any).env?.VITE_AI_BASE_URL || 'http://localhost:8008/api/v1/ml';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -17,6 +17,7 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { apiClient, ensureAuthenticated } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface InventoryItem {
   id: string;
@@ -31,6 +32,8 @@ interface InventoryItem {
 }
 
 export const Inventory: React.FC = () => {
+  const { hasRole } = useAuth();
+  const canAdjust = hasRole(['SUPER_ADMIN', 'PROCUREMENT_OFFICER']);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,7 +120,7 @@ export const Inventory: React.FC = () => {
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          {items.length > 0 && (
+          {items.length > 0 && canAdjust && (
             <Button 
               variant="primary" 
               size="sm" 
@@ -283,15 +286,19 @@ export const Inventory: React.FC = () => {
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedItem(item);
-                              setIsModalOpen(true);
-                            }}
-                            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
-                          >
-                            Adjust
-                          </button>
+                          {canAdjust ? (
+                            <button
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
+                            >
+                              Adjust
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-mono text-slate-400">Read-Only</span>
+                          )}
                         </td>
                       </tr>
                     );

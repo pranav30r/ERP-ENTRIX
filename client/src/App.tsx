@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './pages/Dashboard';
@@ -14,33 +15,35 @@ import { NotFound } from './pages/NotFound';
 
 export const App: React.FC = () => {
   return (
-    <Router>
-      <div className="flex h-screen bg-stripe-canvas overflow-hidden">
-        {/* Linear-style Charcoal Sidebar */}
-        <Sidebar />
+    <AuthProvider>
+      <Router>
+        <div className="flex h-screen bg-stripe-canvas overflow-hidden">
+          {/* Linear-style Charcoal Sidebar */}
+          <Sidebar />
 
-        {/* Main Work Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-          {/* Stripe-style Header */}
-          <Header />
+          {/* Main Work Area */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+            {/* Stripe-style Header */}
+            <Header />
 
-          {/* Page Body */}
-          <main className="p-8 max-w-7xl w-full mx-auto">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/procurement" element={<Procurement />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/ai-insights" element={<AIInsights />} />
-              <Route path="/finance" element={<Finance />} />
-              <Route path="/hr" element={<HR />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/audit" element={<AuditLogs />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
+            {/* Page Body */}
+            <main className="p-8 max-w-7xl w-full mx-auto">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/procurement" element={<Procurement />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/ai-insights" element={<AIInsights />} />
+                <Route path="/finance" element={<Finance />} />
+                <Route path="/hr" element={<HR />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/audit" element={<AuditLogs />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 };
 

@@ -1,0 +1,29 @@
+{
+  "name": "entrix-erp",
+  "version": "1.0.0",
+  "description": "ENTRIX — AI-Powered Integrated Enterprise Resource Planning Platform",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "test": "npm --prefix server test",
+    "db:init": "npm --prefix server run db:init"
+  },
+  "keywords": [
+    "erp",
+    "enterprise-resource-planning",
+    "ai",
+    "react",
+    "typescript",
+    "express",
+    "postgresql",
+    "fastapi"
+  ],
+  "author": "Aditya Sakarkar, Chetan Gupta, Pranav Rathi",
+  "license": "MIT"
+}

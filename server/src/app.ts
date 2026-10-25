@@ -13,6 +13,7 @@ import projectRoutes from './routes/projectRoutes';
 import auditRoutes from './routes/auditRoutes';
 import financeRoutes from './routes/financeRoutes';
 import hrRoutes from './routes/hrRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 dotenv.config();
@@ -51,6 +52,7 @@ app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/finance', financeRoutes);
 app.use('/api/v1/hr', hrRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {

@@ -307,42 +307,42 @@ export const Procurement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Procurement & Supplier Invoicing</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">Procurement & Supplier Invoicing</h2>
+          <p className="text-sm lg:text-base text-slate-500 mt-1">
             8-stage requisition workflow, automated PO issuance, and GAAP-compliant 3-way invoice matching
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={loadAllData} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
 
           {activeTab === 'requisitions' && (
             <Button variant="primary" size="sm" onClick={() => setShowPRModal(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1.5" /> New Requisition
+              <Plus className="w-5 h-5" /> New Requisition
             </Button>
           )}
 
           {activeTab === 'invoices' && canMatchInvoices && (
             <Button variant="primary" size="sm" onClick={() => setShowMatchModal(true)}>
-              <FileCheck2 className="w-3.5 h-3.5 mr-1.5" /> Match New Invoice
+              <FileCheck2 className="w-5 h-5" /> Match New Invoice
             </Button>
           )}
 
           {activeTab === 'suppliers' && (
             <Button variant="primary" size="sm" onClick={() => setShowSupplierModal(true)}>
-              <Building2 className="w-3.5 h-3.5 mr-1.5" /> Register Supplier
+              <Building2 className="w-5 h-5" /> Register Supplier
             </Button>
           )}
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200 gap-1">
+      <div className="flex border-b border-slate-200 gap-2">
         <button
           onClick={() => setActiveTab('requisitions')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2.5 px-5 h-12 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'requisitions'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -350,14 +350,14 @@ export const Procurement: React.FC = () => {
         >
           <FileText className="w-4 h-4" />
           Purchase Requisitions
-          <span className="ml-1 px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-full text-[10px] font-mono">
+          <span className="ml-1.5 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full text-xs font-mono">
             {requests.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('invoices')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2.5 px-5 h-12 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'invoices'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -365,14 +365,14 @@ export const Procurement: React.FC = () => {
         >
           <CreditCard className="w-4 h-4" />
           3-Way Invoicing & Settlements
-          <span className="ml-1 px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-full text-[10px] font-mono">
+          <span className="ml-1.5 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full text-xs font-mono">
             {invoices.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('suppliers')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-2.5 px-5 h-12 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'suppliers'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -380,7 +380,7 @@ export const Procurement: React.FC = () => {
         >
           <Building2 className="w-4 h-4" />
           Suppliers Directory
-          <span className="ml-1 px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded-full text-[10px] font-mono">
+          <span className="ml-1.5 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full text-xs font-mono">
             {suppliers.length}
           </span>
         </button>
@@ -399,37 +399,40 @@ export const Procurement: React.FC = () => {
 
           {/* Requisitions List */}
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800">Active Purchase Requisitions</h3>
-                <p className="text-[11px] text-slate-400">Click a requisition row to inspect workflow stage and linked PO/GRN</p>
+                <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">Active Purchase Requisitions</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Click a requisition row to inspect workflow stage and linked PO/GRN</p>
               </div>
               <span className="text-xs text-slate-400 font-mono">{requests.length} Requests Live</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-xs uppercase tracking-wider sticky top-0 z-10">
                   <tr>
-                    <th className="py-2.5 px-4 font-semibold">PR Code</th>
-                    <th className="py-2.5 px-4 font-semibold">Item Required</th>
-                    <th className="py-2.5 px-4 font-semibold">Department</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Quantity</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Estimated Cost</th>
-                    <th className="py-2.5 px-4 font-semibold text-center">Status</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Workflow Action</th>
+                    <th className="py-3.5 px-6 font-semibold">PR Code</th>
+                    <th className="py-3.5 px-6 font-semibold">Item Required</th>
+                    <th className="py-3.5 px-6 font-semibold">Department</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Quantity</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Estimated Cost</th>
+                    <th className="py-3.5 px-6 font-semibold text-center">Status</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Workflow Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
-                        Loading requisitions from PostgreSQL...
+                      <td colSpan={7} className="py-10 text-center text-slate-400 font-mono">
+                        <div className="flex items-center justify-center gap-2">
+                          <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
+                          <span>Loading requisitions from PostgreSQL...</span>
+                        </div>
                       </td>
                     </tr>
                   ) : requests.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
+                      <td colSpan={7} className="py-14 text-center text-slate-400 text-sm">
                         No purchase requisitions found. Click "New Requisition" to create one.
                       </td>
                     </tr>
@@ -438,25 +441,25 @@ export const Procurement: React.FC = () => {
                       <tr
                         key={pr.id}
                         onClick={() => setSelectedPR(pr)}
-                        className={`cursor-pointer transition-colors ${
+                        className={`cursor-pointer transition-colors h-14 ${
                           selectedPR?.id === pr.id ? 'bg-indigo-50/60' : 'hover:bg-slate-50'
                         }`}
                       >
-                        <td className="py-3 px-4 font-mono font-bold text-indigo-600">{pr.pr_code}</td>
-                        <td className="py-3 px-4 font-medium text-slate-800">
+                        <td className="py-4 px-6 font-mono font-bold text-indigo-600">{pr.pr_code}</td>
+                        <td className="py-4 px-6 font-medium text-slate-900">
                           {pr.item?.name || 'Inventory SKU'}
-                          <p className="text-[10px] text-slate-400 font-mono">{pr.item?.sku_code}</p>
+                          <p className="text-xs text-slate-400 font-mono">{pr.item?.sku_code}</p>
                         </td>
-                        <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                        <td className="py-4 px-6 text-slate-600 font-mono text-xs">
                           {pr.department?.name || 'General Org'}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-semibold">{pr.quantity}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                        <td className="py-4 px-6 text-right font-mono font-semibold text-slate-900">{pr.quantity}</td>
+                        <td className="py-4 px-6 text-right font-mono font-bold text-slate-900">
                           ₹{Number(pr.estimated_total).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-4 px-6 text-center">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-medium ${
                               pr.status === 'APPROVED'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                 : pr.status === 'GOODS_RECEIVED'
@@ -475,72 +478,72 @@ export const Procurement: React.FC = () => {
                             {pr.status}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-4 px-6 text-right">
                           {pr.status === 'PENDING_MANAGER' &&
                             (canApproveManager ? (
-                              <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => handleApproval(pr.id, 'manager', 'APPROVE')}
-                                  className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-semibold hover:bg-emerald-700 transition-colors"
+                                  className="min-h-[36px] px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
                                 >
                                   Approve
                                 </button>
                                 <button
                                   onClick={() => handleApproval(pr.id, 'manager', 'REJECT')}
-                                  className="px-2 py-1 bg-rose-600 text-white rounded text-[11px] font-semibold hover:bg-rose-700 transition-colors"
+                                  className="min-h-[36px] px-3.5 py-1.5 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 transition-colors shadow-sm"
                                 >
                                   Reject
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-mono text-slate-400">Needs Dept Lead</span>
+                              <span className="text-xs font-mono text-slate-400">Needs Dept Lead</span>
                             ))}
 
                           {pr.status === 'PENDING_FINANCE' &&
                             (canApproveFinance ? (
-                              <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => handleApproval(pr.id, 'finance', 'APPROVE')}
-                                  className="px-2.5 py-1 bg-indigo-600 text-white rounded text-[11px] font-semibold hover:bg-indigo-700 transition-colors"
+                                  className="min-h-[36px] px-3.5 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
                                 >
                                   Finance Sign-off
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-mono text-slate-400">Needs Finance Sign-off</span>
+                              <span className="text-xs font-mono text-slate-400">Needs Finance Sign-off</span>
                             ))}
 
                           {pr.status === 'APPROVED' &&
                             (canReceiveGoods ? (
-                              <div className="flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => handleReceiveGoods(pr.id)}
-                                  className="px-2.5 py-1 bg-emerald-600 text-white rounded text-[11px] font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1"
+                                  className="min-h-[36px] px-3.5 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
                                 >
-                                  <PackageCheck className="w-3 h-3" /> Receive Goods (GRN)
+                                  <PackageCheck className="w-4 h-4" /> Receive Goods (GRN)
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[11px] font-semibold text-emerald-600 flex items-center justify-end gap-1">
-                                <CheckCircle className="w-3.5 h-3.5" /> Approved
+                              <span className="text-xs font-semibold text-emerald-600 flex items-center justify-end gap-1.5">
+                                <CheckCircle className="w-4 h-4" /> Approved
                               </span>
                             ))}
 
                           {pr.status === 'GOODS_RECEIVED' && (
-                            <div className="flex items-center justify-end gap-1.5 text-teal-600 font-semibold text-[11px]">
-                              <CheckCircle className="w-3.5 h-3.5" /> Goods In Warehouse
+                            <div className="flex items-center justify-end gap-1.5 text-teal-600 font-semibold text-xs">
+                              <CheckCircle className="w-4 h-4" /> Goods In Warehouse
                             </div>
                           )}
 
                           {pr.status === 'INVOICE_MATCHED' && (
-                            <span className="text-[11px] font-semibold text-cyan-600 flex items-center justify-end gap-1">
-                              <CheckCircle className="w-3.5 h-3.5" /> Invoiced & Balanced
+                            <span className="text-xs font-semibold text-cyan-600 flex items-center justify-end gap-1.5">
+                              <CheckCircle className="w-4 h-4" /> Invoiced & Balanced
                             </span>
                           )}
 
                           {pr.status === 'REJECTED' && (
-                            <span className="text-[11px] font-semibold text-rose-600 flex items-center justify-end gap-1">
-                              <ShieldAlert className="w-3.5 h-3.5" /> Rejected
+                            <span className="text-xs font-semibold text-rose-600 flex items-center justify-end gap-1.5">
+                              <ShieldAlert className="w-4 h-4" /> Rejected
                             </span>
                           )}
                         </td>
@@ -556,108 +559,119 @@ export const Procurement: React.FC = () => {
 
       {/* TAB 2: 3-WAY INVOICING & SETTLEMENTS */}
       {activeTab === 'invoices' && (
-        <div className="space-y-6">
+        <div className="space-y-6 lg:space-y-8">
           {/* Telemetry Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                Total Invoices
-              </span>
-              <p className="text-2xl font-bold font-mono text-slate-900 mt-1">{invoices.length}</p>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">Audit logged & tenant isolated</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+              <div>
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono block">
+                  Total Invoices
+                </span>
+                <p className="text-3xl lg:text-4xl font-bold font-mono text-slate-900 mt-3">{invoices.length}</p>
+              </div>
+              <span className="text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100 font-mono block">Audit logged & tenant isolated</span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <span className="text-[11px] font-semibold text-cyan-700 uppercase tracking-wider block">
-                Matched & Payable
-              </span>
-              <p className="text-2xl font-bold font-mono text-cyan-900 mt-1">
-                ₹{totalPayableMatched.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-              <span className="text-[11px] text-cyan-600 mt-0.5 block">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+              <div>
+                <span className="text-xs font-semibold text-cyan-700 uppercase tracking-wider font-mono block">
+                  Matched & Payable
+                </span>
+                <p className="text-3xl lg:text-4xl font-bold font-mono text-cyan-900 mt-3">
+                  ₹{totalPayableMatched.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <span className="text-xs text-cyan-600 mt-3 pt-3 border-t border-slate-100 font-mono block">
                 {matchedPendingInvoices.length} invoices ready for payment
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">
-                Settled & Paid
-              </span>
-              <p className="text-2xl font-bold font-mono text-emerald-900 mt-1">
-                ₹{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </p>
-              <span className="text-[11px] text-emerald-600 mt-0.5 block">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+              <div>
+                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider font-mono block">
+                  Settled & Paid
+                </span>
+                <p className="text-3xl lg:text-4xl font-bold font-mono text-emerald-900 mt-3">
+                  ₹{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <span className="text-xs text-emerald-600 mt-3 pt-3 border-t border-slate-100 font-mono block">
                 {paidInvoices.length} ledger-balanced disbursements
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-              <span className="text-[11px] font-semibold text-rose-700 uppercase tracking-wider block">
-                Discrepancies
-              </span>
-              <p className="text-2xl font-bold font-mono text-rose-900 mt-1">{discrepancyInvoices.length}</p>
-              <span className="text-[11px] text-rose-600 mt-0.5 block">Blocked from settlement</span>
+            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+              <div>
+                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider font-mono block">
+                  Discrepancies
+                </span>
+                <p className="text-3xl lg:text-4xl font-bold font-mono text-rose-900 mt-3">{discrepancyInvoices.length}</p>
+              </div>
+              <span className="text-xs text-rose-600 mt-3 pt-3 border-t border-slate-100 font-mono block">Blocked from settlement</span>
             </div>
           </div>
 
           {/* Invoices Table */}
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-slate-800">Supplier Invoices & 3-Way Match Audit</h3>
-                <p className="text-[11px] text-slate-400">
+                <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">Supplier Invoices & 3-Way Match Audit</h3>
+                <p className="text-sm text-slate-500 mt-0.5">
                   Matches Invoice amounts and billed quantities against Purchase Orders and Goods Received Notes
                 </p>
               </div>
               <span className="text-xs text-slate-400 font-mono">{invoices.length} Records</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-xs uppercase tracking-wider sticky top-0 z-10">
                   <tr>
-                    <th className="py-2.5 px-4 font-semibold">Invoice #</th>
-                    <th className="py-2.5 px-4 font-semibold">PO Reference</th>
-                    <th className="py-2.5 px-4 font-semibold">GRN Code</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Billed Qty</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Invoice Amount</th>
-                    <th className="py-2.5 px-4 font-semibold text-center">Status</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Payment Action</th>
+                    <th className="py-3.5 px-6 font-semibold">Invoice #</th>
+                    <th className="py-3.5 px-6 font-semibold">PO Reference</th>
+                    <th className="py-3.5 px-6 font-semibold">GRN Code</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Billed Qty</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Invoice Amount</th>
+                    <th className="py-3.5 px-6 font-semibold text-center">Status</th>
+                    <th className="py-3.5 px-6 font-semibold text-right">Payment Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
-                        Loading supplier invoices from PostgreSQL...
+                      <td colSpan={7} className="py-10 text-center text-slate-400 font-mono">
+                        <div className="flex items-center justify-center gap-2">
+                          <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
+                          <span>Loading supplier invoices from PostgreSQL...</span>
+                        </div>
                       </td>
                     </tr>
                   ) : invoices.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
+                      <td colSpan={7} className="py-14 text-center text-slate-400 text-sm">
                         No supplier invoices recorded yet. Click "Match New Invoice" to verify a vendor bill.
                       </td>
                     </tr>
                   ) : (
                     invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">{inv.invoice_number}</td>
-                        <td className="py-3 px-4 font-mono text-indigo-600">
+                      <tr key={inv.id} className="hover:bg-slate-50 transition-colors h-14">
+                        <td className="py-4 px-6 font-mono font-bold text-slate-900">{inv.invoice_number}</td>
+                        <td className="py-4 px-6 font-mono text-indigo-600">
                           {inv.purchase_order?.po_number || inv.po_id?.slice(0, 8) || 'PO-N/A'}
-                          <p className="text-[10px] text-slate-400 font-sans">
+                          <p className="text-xs text-slate-400 font-sans">
                             {inv.purchase_order?.vendor_name || 'Vendor'}
                           </p>
                         </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">
+                        <td className="py-4 px-6 font-mono text-slate-600">
                           {inv.grn?.grn_code || inv.grn_id?.slice(0, 8) || 'GRN-N/A'}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-medium">{inv.billed_quantity}</td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900">
+                        <td className="py-4 px-6 text-right font-mono font-semibold text-slate-900">{inv.billed_quantity}</td>
+                        <td className="py-4 px-6 text-right font-mono font-bold text-slate-900">
                           ₹{Number(inv.invoice_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-4 px-6 text-center">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-medium ${
                               inv.status === 'MATCHED'
                                 ? 'bg-cyan-50 text-cyan-700 border border-cyan-200'
                                 : inv.status === 'PAID'
@@ -668,12 +682,12 @@ export const Procurement: React.FC = () => {
                             {inv.status}
                           </span>
                           {inv.discrepancy_notes && (
-                            <p className="text-[10px] text-rose-600 mt-1 max-w-xs truncate" title={inv.discrepancy_notes}>
+                            <p className="text-xs text-rose-600 mt-1 max-w-xs truncate" title={inv.discrepancy_notes}>
                               {inv.discrepancy_notes}
                             </p>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-4 px-6 text-right">
                           {inv.status === 'MATCHED' &&
                             (canSettlePayments ? (
                               <Button
@@ -683,25 +697,25 @@ export const Procurement: React.FC = () => {
                                 disabled={settlingId === inv.id}
                               >
                                 {settlingId === inv.id ? (
-                                  <RefreshCw className="w-3 h-3 animate-spin mr-1" />
+                                  <RefreshCw className="w-4 h-4 animate-spin mr-1" />
                                 ) : (
-                                  <DollarSign className="w-3 h-3 mr-1" />
+                                  <DollarSign className="w-4 h-4 mr-1" />
                                 )}
                                 Settle Payment
                               </Button>
                             ) : (
-                              <span className="text-[10px] font-mono text-slate-400">Finance Approval Req</span>
+                              <span className="text-xs font-mono text-slate-400">Finance Approval Req</span>
                             ))}
 
                           {inv.status === 'PAID' && (
-                            <span className="text-[11px] font-semibold text-emerald-600 flex items-center justify-end gap-1">
-                              <CheckCircle className="w-3.5 h-3.5" /> Settled (Ledger Cleared)
+                            <span className="text-xs font-semibold text-emerald-600 flex items-center justify-end gap-1.5">
+                              <CheckCircle className="w-4 h-4" /> Settled (Ledger Cleared)
                             </span>
                           )}
 
                           {inv.status === 'DISCREPANCY' && (
-                            <span className="text-[11px] font-semibold text-rose-600 flex items-center justify-end gap-1">
-                              <AlertTriangle className="w-3.5 h-3.5" /> Discrepancy Block
+                            <span className="text-xs font-semibold text-rose-600 flex items-center justify-end gap-1.5">
+                              <AlertTriangle className="w-4 h-4" /> Discrepancy Block
                             </span>
                           )}
                         </td>
@@ -718,52 +732,55 @@ export const Procurement: React.FC = () => {
       {/* TAB 3: SUPPLIERS DIRECTORY */}
       {activeTab === 'suppliers' && (
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-slate-800">Approved Vendor & Supplier Directory</h3>
-              <p className="text-[11px] text-slate-400">Authorized partners for purchase orders and inventory deliveries</p>
+              <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">Approved Vendor & Supplier Directory</h3>
+              <p className="text-sm text-slate-500 mt-0.5">Authorized partners for purchase orders and inventory deliveries</p>
             </div>
             <span className="text-xs text-slate-400 font-mono">{suppliers.length} Registered</span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-xs uppercase tracking-wider sticky top-0 z-10">
                 <tr>
-                  <th className="py-2.5 px-4 font-semibold">Vendor Code</th>
-                  <th className="py-2.5 px-4 font-semibold">Company Name</th>
-                  <th className="py-2.5 px-4 font-semibold">Email</th>
-                  <th className="py-2.5 px-4 font-semibold">Phone</th>
-                  <th className="py-2.5 px-4 font-semibold text-center">Payment Terms</th>
-                  <th className="py-2.5 px-4 font-semibold text-right">Rating</th>
+                  <th className="py-3.5 px-6 font-semibold">Vendor Code</th>
+                  <th className="py-3.5 px-6 font-semibold">Company Name</th>
+                  <th className="py-3.5 px-6 font-semibold">Email</th>
+                  <th className="py-3.5 px-6 font-semibold">Phone</th>
+                  <th className="py-3.5 px-6 font-semibold text-center">Payment Terms</th>
+                  <th className="py-3.5 px-6 font-semibold text-right">Rating</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
-                      Loading suppliers from PostgreSQL...
+                    <td colSpan={6} className="py-10 text-center text-slate-400 font-mono">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
+                        <span>Loading suppliers from PostgreSQL...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : suppliers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                    <td colSpan={6} className="py-14 text-center text-slate-400 text-sm">
                       No suppliers registered yet. Click "Register Supplier" to add one.
                     </td>
                   </tr>
                 ) : (
                   suppliers.map((sup) => (
-                    <tr key={sup.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-indigo-600">{sup.code}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">{sup.name}</td>
-                      <td className="py-3 px-4 text-slate-600 font-mono">{sup.email || '—'}</td>
-                      <td className="py-3 px-4 text-slate-600 font-mono">{sup.phone || '—'}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-mono font-semibold">
+                    <tr key={sup.id} className="hover:bg-slate-50 transition-colors h-14">
+                      <td className="py-4 px-6 font-mono font-bold text-indigo-600">{sup.code}</td>
+                      <td className="py-4 px-6 font-semibold text-slate-900">{sup.name}</td>
+                      <td className="py-4 px-6 text-slate-600 font-mono text-xs">{sup.email || '—'}</td>
+                      <td className="py-4 px-6 text-slate-600 font-mono text-xs">{sup.phone || '—'}</td>
+                      <td className="py-4 px-6 text-center">
+                        <span className="inline-block px-3 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-mono font-semibold">
                           {sup.payment_terms || 'NET30'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-600">
+                      <td className="py-4 px-6 text-right font-mono font-bold text-emerald-600 text-sm">
                         ★ {Number(sup.rating || 5.0).toFixed(1)} / 5.0
                       </td>
                     </tr>

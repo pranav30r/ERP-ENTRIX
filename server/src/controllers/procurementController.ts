@@ -101,7 +101,12 @@ export const getPurchaseRequests = async (req: Request, res: Response): Promise<
       include: [
         { model: User, as: 'requester', attributes: ['id', 'first_name', 'last_name', 'email'] },
         { model: Department, as: 'department', attributes: ['id', 'code', 'name'] },
-        { model: InventoryItem, as: 'item' }
+        { model: InventoryItem, as: 'item' },
+        {
+          model: PurchaseOrder,
+          as: 'purchase_order',
+          include: [{ model: GoodsReceivedNote, as: 'grns' }]
+        }
       ],
       order: [['created_at', 'DESC']]
     });
@@ -841,4 +846,59 @@ export const settleSupplierInvoice = async (req: Request, res: Response): Promis
     res.status(500).json({ success: false, error: 'Error processing supplier payment settlement.' });
   }
 };
+
+export const getSupplierInvoices = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tenantId = (req as any).user?.tenant_id || (req as any).tenantId;
+    if (!tenantId) {
+      res.status(403).json({ success: false, error: 'Tenant context required.' });
+      return;
+    }
+
+    const invoices = await SupplierInvoice.findAll({
+      where: { tenant_id: tenantId },
+      include: [
+        { model: PurchaseOrder, as: 'purchase_order' },
+        { model: GoodsReceivedNote, as: 'grn' }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    res.status(200).json({
+      success: true,
+      data: invoices
+    });
+  } catch (error) {
+    console.error('[ProcurementController] getSupplierInvoices error:', error);
+    res.status(500).json({ success: false, error: 'Error fetching supplier invoices.' });
+  }
+};
+
+export const getPurchaseOrders = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const tenantId = (req as any).user?.tenant_id || (req as any).tenantId;
+    if (!tenantId) {
+      res.status(403).json({ success: false, error: 'Tenant context required.' });
+      return;
+    }
+
+    const orders = await PurchaseOrder.findAll({
+      where: { tenant_id: tenantId },
+      include: [
+        { model: GoodsReceivedNote, as: 'grns' },
+        { model: PurchaseRequest, as: 'purchase_request', include: [{ model: InventoryItem, as: 'item' }] }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    res.status(200).json({
+      success: true,
+      data: orders
+    });
+  } catch (error) {
+    console.error('[ProcurementController] getPurchaseOrders error:', error);
+    res.status(500).json({ success: false, error: 'Error fetching purchase orders.' });
+  }
+};
+
 

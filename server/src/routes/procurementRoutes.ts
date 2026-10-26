@@ -9,7 +9,9 @@ import {
   createSupplier,
   selectSupplier,
   matchSupplierInvoice,
-  settleSupplierInvoice
+  settleSupplierInvoice,
+  getSupplierInvoices,
+  getPurchaseOrders
 } from '../controllers/procurementController';
 import { authenticateJWT, requireRole, requireTenant } from '../middlewares/auth';
 import { requireModuleEntitlement } from '../middlewares/entitlements';
@@ -30,6 +32,8 @@ router.post('/requests/:id/receive-goods', requireRole(['COMPANY_ADMIN', 'SUPER_
 // Suppliers & 3-Way Invoicing
 router.get('/suppliers', getSuppliers);
 router.post('/suppliers', requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'PROCUREMENT_OFFICER']), createSupplier);
+router.get('/orders', getPurchaseOrders);
+router.get('/invoices', getSupplierInvoices);
 router.post('/invoices/match', requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER', 'PROCUREMENT_OFFICER']), matchSupplierInvoice);
 router.post('/invoices/:id/pay', requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), settleSupplierInvoice);
 

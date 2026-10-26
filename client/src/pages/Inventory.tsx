@@ -33,17 +33,31 @@ interface InventoryItem {
 
 export const Inventory: React.FC = () => {
   const { hasRole } = useAuth();
-  const canAdjust = hasRole(['SUPER_ADMIN', 'PROCUREMENT_OFFICER']);
+  const canManage = hasRole(['SUPER_ADMIN', 'PROCUREMENT_OFFICER']);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Adjustment Modal
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [adjustmentQty, setAdjustmentQty] = useState<number>(0);
   const [adjustmentType, setAdjustmentType] = useState<'IN' | 'OUT'>('IN');
   const [reason, setReason] = useState('');
+  
+  // Create Item Modal
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [skuCode, setSkuCode] = useState('');
+  const [itemName, setItemName] = useState('');
+  const [category, setCategory] = useState('Raw Materials');
+  const [uom, setUom] = useState('PCS');
+  const [unitPrice, setUnitPrice] = useState<number>(100);
+  const [stockQty, setStockQty] = useState<number>(50);
+  const [safetyStock, setSafetyStock] = useState<number>(20);
+
   const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -78,6 +92,7 @@ export const Inventory: React.FC = () => {
   const handleAdjustStock = async () => {
     if (!selectedItem || adjustmentQty <= 0) return;
     setSubmitting(true);
+    setFeedback(null);
     try {
       await ensureAuthenticated();
       const res = await apiClient.patch(`/inventory/${selectedItem.id}/adjust`, {
@@ -87,14 +102,46 @@ export const Inventory: React.FC = () => {
       });
 
       if (res.data.success) {
-        setIsModalOpen(false);
+        setIsAdjustModalOpen(false);
         setAdjustmentQty(0);
         setReason('');
         setSelectedItem(null);
+        setFeedback({ type: 'success', text: `Stock successfully adjusted for ${selectedItem.sku_code}.` });
         await fetchInventory();
       }
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to adjust stock. Please try again.');
+      setFeedback({ type: 'error', text: err.response?.data?.error || 'Failed to adjust stock.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!skuCode || !itemName) return;
+    setSubmitting(true);
+    setFeedback(null);
+    try {
+      await ensureAuthenticated();
+      const res = await apiClient.post('/inventory', {
+        sku_code: skuCode.trim().toUpperCase(),
+        name: itemName.trim(),
+        category,
+        unit_of_measure: uom,
+        unit_price: Number(unitPrice),
+        stock_qty: Number(stockQty),
+        safety_stock: Number(safetyStock)
+      });
+
+      if (res.data.success) {
+        setIsCreateModalOpen(false);
+        setSkuCode('');
+        setItemName('');
+        setFeedback({ type: 'success', text: `SKU ${skuCode} created successfully in warehouse registry.` });
+        await fetchInventory();
+      }
+    } catch (err: any) {
+      setFeedback({ type: 'error', text: err.response?.data?.error || 'Failed to create inventory item.' });
     } finally {
       setSubmitting(false);
     }
@@ -120,21 +167,33 @@ export const Inventory: React.FC = () => {
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          {items.length > 0 && canAdjust && (
+          {canManage && (
             <Button 
               variant="primary" 
               size="sm" 
-              onClick={() => {
-                setSelectedItem(items[0]);
-                setIsModalOpen(true);
-              }}
+              onClick={() => setIsCreateModalOpen(true)}
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
-              Stock Adjustment
+              New SKU Item
             </Button>
           )}
         </div>
       </div>
+
+      {/* Feedback Toast */}
+      {feedback && (
+        <div className={`p-3 rounded-lg border text-xs flex items-center justify-between ${
+          feedback.type === 'success' 
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+            : 'bg-rose-50 border-rose-200 text-rose-800'
+        }`}>
+          <div className="flex items-center gap-2">
+            {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-rose-600" />}
+            <span>{feedback.text}</span>
+          </div>
+          <button onClick={() => setFeedback(null)} className="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -175,7 +234,7 @@ export const Inventory: React.FC = () => {
 
         <Card className="p-4 bg-white border border-slate-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Storage Bins</span>
+            <span className="text-xs font-medium text-slate-500">Storage Registry</span>
             <Layers className="w-4 h-4 text-blue-500" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
@@ -201,23 +260,23 @@ export const Inventory: React.FC = () => {
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="w-3.5 h-3.5 text-slate-400" />
           <span className="text-xs text-slate-500">Category:</span>
-          {['All', 'Raw Materials', 'Electronics', 'Office Supplies'].map(category => (
+          {['All', 'Raw Materials', 'Electronics', 'Office Supplies', 'Hardware'].map(cat => (
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
               className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
-                selectedCategory === category 
+                selectedCategory === cat 
                   ? 'bg-indigo-600 text-white font-medium' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {category}
+              {cat}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Stripe-style Dense Inventory Table */}
+      {/* Dense Inventory Table */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="py-3 px-5 border-b border-slate-100 flex flex-row items-center justify-between">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 font-mono">
@@ -243,11 +302,29 @@ export const Inventory: React.FC = () => {
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-slate-400">Loading live inventory from database...</td>
+                    <td colSpan={8} className="py-8 text-center text-slate-400">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                        <span>Loading live inventory from database...</span>
+                      </div>
+                    </td>
                   </tr>
                 ) : filteredItems.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-6 text-center text-slate-400">No inventory items found.</td>
+                    <td colSpan={8} className="py-12 text-center text-slate-500">
+                      <div className="max-w-sm mx-auto space-y-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                          <Boxes className="w-5 h-5" />
+                        </div>
+                        <p className="font-semibold text-slate-800 text-sm">No inventory items found</p>
+                        <p className="text-xs text-slate-500">Add an SKU item to start tracking warehouse quantities and valuation.</p>
+                        {canManage && (
+                          <Button variant="primary" size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Add First Item
+                          </Button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   filteredItems.map(item => {
@@ -286,15 +363,15 @@ export const Inventory: React.FC = () => {
                           )}
                         </td>
                         <td className="py-3.5 px-4 text-right">
-                          {canAdjust ? (
+                          {canManage ? (
                             <button
                               onClick={() => {
                                 setSelectedItem(item);
-                                setIsModalOpen(true);
+                                setIsAdjustModalOpen(true);
                               }}
                               className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold px-2 py-1 rounded hover:bg-indigo-50 transition-colors"
                             >
-                              Adjust
+                              Adjust Stock
                             </button>
                           ) : (
                             <span className="text-[10px] font-mono text-slate-400">Read-Only</span>
@@ -310,8 +387,130 @@ export const Inventory: React.FC = () => {
         </div>
       </div>
 
+      {/* Modal: Create SKU Item */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-bold text-slate-900">Register New Inventory SKU</h3>
+              </div>
+              <button 
+                onClick={() => setIsCreateModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateItem} className="p-6 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-700 font-medium mb-1">SKU Code (Unique)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. SOL-400W-01"
+                  value={skuCode}
+                  onChange={(e) => setSkuCode(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800 uppercase font-mono font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-medium mb-1">Item Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Monocrystalline Solar PV Panel"
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Category</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800"
+                  >
+                    <option value="Raw Materials">Raw Materials</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Office Supplies">Office Supplies</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Packaging">Packaging</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Unit of Measure</label>
+                  <select
+                    value={uom}
+                    onChange={(e) => setUom(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800"
+                  >
+                    <option value="PCS">PCS</option>
+                    <option value="KG">KG</option>
+                    <option value="METERS">METERS</option>
+                    <option value="BOXES">BOXES</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Unit Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={unitPrice}
+                    onChange={(e) => setUnitPrice(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Initial Qty</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={stockQty}
+                    onChange={(e) => setStockQty(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-700 font-medium mb-1">Safety Stock</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={safetyStock}
+                    onChange={(e) => setSafetyStock(Number(e.target.value))}
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                <Button variant="outline" size="sm" type="button" onClick={() => setIsCreateModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" type="submit" disabled={submitting}>
+                  {submitting ? 'Registering...' : 'Save SKU'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Stock Adjustment Modal */}
-      {isModalOpen && selectedItem && (
+      {isAdjustModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -320,7 +519,7 @@ export const Inventory: React.FC = () => {
                 <h3 className="text-sm font-bold text-slate-900">Live Stock Mutation Ledger</h3>
               </div>
               <button 
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsAdjustModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 text-sm font-bold"
               >
                 ✕
@@ -401,7 +600,7 @@ export const Inventory: React.FC = () => {
             </div>
 
             <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              <Button variant="outline" size="sm" onClick={() => setIsAdjustModalOpen(false)}>
                 Cancel
               </Button>
               <Button 

@@ -2,23 +2,30 @@ import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle,
   Boxes,
-  Activity,
   DollarSign,
   ArrowUpRight,
   RefreshCw,
-  Info
+  Info,
+  Clock,
+  Plus,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { WorkflowTimeline, ProcurementStage } from '../components/WorkflowTimeline';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 export const Dashboard: React.FC = () => {
+  const { hasRole } = useAuth();
   const [inventory, setInventory] = useState<any[]>([]);
   const [metrics, setMetrics] = useState({ total_items: 0, low_stock_items: 0 });
   const [recentPR, setRecentPR] = useState<any | null>(null);
   const [activeStage, setActiveStage] = useState<ProcurementStage>('PENDING_MANAGER');
   const [activeAmount, setActiveAmount] = useState<number>(24500);
+  const [pendingPRCount, setPendingPRCount] = useState<number>(0);
+  const [ledgerBalanced, setLedgerBalanced] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,21 +34,38 @@ export const Dashboard: React.FC = () => {
     setError(null);
     try {
       await ensureAuthenticated();
-      const [invRes, prsRes] = await Promise.all([
+      const promises: Promise<any>[] = [
         apiClient.get('/inventory'),
         apiClient.get('/procurement/requests')
-      ]);
+      ];
 
-      if (invRes.data.success) {
+      // If user has finance or admin rights, also query ledger status for real telemetry
+      if (hasRole(['SUPER_ADMIN', 'FINANCE_OFFICER'])) {
+        promises.push(apiClient.get('/finance/ledger').catch(() => null));
+      }
+
+      const [invRes, prsRes, finRes] = await Promise.all(promises);
+
+      if (invRes && invRes.data.success) {
         setInventory(invRes.data.data || []);
         setMetrics(invRes.data.metrics || { total_items: 0, low_stock_items: 0 });
       }
 
-      if (prsRes.data.success && Array.isArray(prsRes.data.data) && prsRes.data.data.length > 0) {
-        const latest = prsRes.data.data[0];
-        setRecentPR(latest);
-        setActiveStage(latest.status as ProcurementStage);
-        setActiveAmount(Number(latest.estimated_total));
+      if (prsRes && prsRes.data.success && Array.isArray(prsRes.data.data)) {
+        const prs = prsRes.data.data;
+        const activePRs = prs.filter((p: any) => p.status !== 'PAID' && p.status !== 'REJECTED');
+        setPendingPRCount(activePRs.length);
+
+        if (prs.length > 0) {
+          const latest = prs[0];
+          setRecentPR(latest);
+          setActiveStage(latest.status as ProcurementStage);
+          setActiveAmount(Number(latest.estimated_total));
+        }
+      }
+
+      if (finRes && finRes.data?.success && finRes.data.summary) {
+        setLedgerBalanced(Boolean(finRes.data.summary.is_balanced));
       }
     } catch (e: any) {
       console.warn('Dashboard telemetry error:', e);
@@ -70,7 +94,7 @@ export const Dashboard: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
-            Current Period: Q4 FY2026
+            Tenant Period: FY2026-Q4
           </span>
           <Button variant="outline" size="sm" onClick={fetchDashboardData} disabled={loading} aria-label="Refresh telemetry">
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
@@ -87,6 +111,37 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Quick Operations Action Bar */}
+      <div className="flex flex-wrap items-center gap-2.5 p-3 bg-white rounded-xl border border-slate-200 shadow-sm text-xs">
+        <span className="text-slate-400 font-mono text-[11px] font-semibold uppercase tracking-wider mr-1">Quick Actions:</span>
+        <Link
+          to="/procurement"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md font-semibold text-xs border border-indigo-200/60 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5 text-indigo-600" /> New Requisition
+        </Link>
+        <Link
+          to="/inventory"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-md font-semibold text-xs border border-slate-200 transition-colors"
+        >
+          <Boxes className="w-3.5 h-3.5 text-slate-600" /> Manage Inventory
+        </Link>
+        {hasRole(['SUPER_ADMIN', 'FINANCE_OFFICER']) && (
+          <Link
+            to="/finance"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-md font-semibold text-xs border border-slate-200 transition-colors"
+          >
+            <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> General Ledger
+          </Link>
+        )}
+        <Link
+          to="/audit"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-md font-semibold text-xs border border-slate-200 transition-colors"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-purple-600" /> Audit Trail
+        </Link>
+      </div>
 
       {/* KPI Cards (Stripe Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -140,19 +195,24 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 4: AI Demand Buffer */}
+        {/* Card 4: Active Procurement Pipeline & Ledger Telemetry */}
         <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-[0_1px_2px_rgba(0,0,0,0.03)] hover:border-slate-300 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">AI Demand Safety</span>
-            <Activity className="w-4 h-4 text-blue-500" aria-hidden="true" />
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Pipeline Requests</span>
+            <Clock className="w-4 h-4 text-indigo-500" aria-hidden="true" />
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900 font-mono">98.4%</span>
-            <span className="text-xs text-emerald-600">Optimal Buffer</span>
+            <span className="text-2xl font-bold text-slate-900 font-mono">{pendingPRCount}</span>
+            <span className="text-xs text-indigo-600 font-semibold">Active PRs</span>
           </div>
-          <div className="mt-2 text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-            <Info className="w-3 h-3" aria-hidden="true" />
-            <span>Monte Carlo stockout probability buffer</span>
+          <div className="mt-2 text-[10px] text-slate-500 flex items-center gap-1 font-mono">
+            {ledgerBalanced === true ? (
+              <span className="text-emerald-700 flex items-center gap-1 font-semibold">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Ledger Balanced (Δ = ₹0.00)
+              </span>
+            ) : (
+              <span>Requisitions undergoing stage-gate approvals</span>
+            )}
           </div>
         </div>
       </div>
@@ -176,7 +236,7 @@ export const Dashboard: React.FC = () => {
       {/* Inventory Table (Stripe Style) */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-800">Warehouse Inventory Items</h3>
+          <h3 className="text-sm font-semibold text-slate-800">Warehouse Inventory Registry</h3>
           <Link
             to="/inventory"
             className="text-xs text-indigo-600 hover:text-indigo-800 font-mono flex items-center gap-1 font-medium"
@@ -199,11 +259,30 @@ export const Dashboard: React.FC = () => {
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400 font-mono">Loading inventory records...</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400 font-mono">
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                      <span>Loading inventory records from PostgreSQL...</span>
+                    </div>
+                  </td>
                 </tr>
               ) : inventory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400 font-mono">No inventory items found.</td>
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <div className="max-w-sm mx-auto space-y-3">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                        <Boxes className="w-5 h-5" />
+                      </div>
+                      <p className="font-semibold text-slate-800 text-sm">No items in warehouse</p>
+                      <p className="text-xs text-slate-500">Register SKU items in Inventory Master to begin tracking perpetual valuation.</p>
+                      <Link
+                        to="/inventory"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 text-white rounded-md text-xs font-semibold hover:bg-indigo-700"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Open Inventory Master
+                      </Link>
+                    </div>
+                  </td>
                 </tr>
               ) : (
                 inventory.map((item) => (

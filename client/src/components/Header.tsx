@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, Search, ChevronDown, Loader2, Menu, Sparkles } from 'lucide-react';
 import { getSocket } from '../services/socket';
 import { useAuth, DEMO_PERSONAS } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
+import { Tooltip } from './ui/Tooltip';
+import { StatusPill } from './ui/StatusPill';
 
 export const Header: React.FC = () => {
   const { user, role, switchRole, loading: authLoading } = useAuth();
@@ -12,9 +14,32 @@ export const Header: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const [switching, setSwitching] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Ctrl+K / Cmd+K shortcut to focus search input; Escape blurs it
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
+        searchInputRef.current?.blur();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const socket = getSocket();
+    setSocketConnected(socket.connected);
+
+    const onConnect = () => setSocketConnected(true);
+    const onDisconnect = () => setSocketConnected(false);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
 
     const handlePRCreated = (data: any) => {
       setNotifications((prev) => [data.message || `Requisition ${data.pr?.pr_code} created`, ...prev.slice(0, 9)]);
@@ -38,6 +63,8 @@ export const Header: React.FC = () => {
     socket.on('inventory_updated', handleInv);
 
     return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('pr_created', handlePRCreated);
       socket.off('pr_status_changed', handlePRStatus);
       socket.off('grn_received', handleGRN);
@@ -91,18 +118,38 @@ export const Header: React.FC = () => {
         </button>
 
         <div className="relative w-full">
-          <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
+          <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input
+            ref={searchInputRef}
             type="search"
-            aria-label="Search workspace entities"
+            aria-label="Search workspace entities (Press Ctrl+K or Cmd+K to focus)"
             placeholder="Search SKU, requisition ID, ledger entries..."
-            className="w-full h-11 pl-11 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
+            className="w-full h-11 pl-11 pr-14 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
           />
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] font-mono text-slate-400 bg-white border border-slate-200 rounded shadow-xs">
+            {typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? '⌘ K' : 'Ctrl K'}
+          </kbd>
         </div>
       </div>
 
       {/* Right User & Live Status Section */}
-      <div className="flex items-center gap-3 sm:gap-5">
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Connection status indicator dot */}
+        <Tooltip content={socketConnected ? 'Live data connected' : 'Connecting to live telemetry...'}>
+          <div
+            tabIndex={0}
+            role="status"
+            aria-label={socketConnected ? 'Live data connected' : 'Connecting to live telemetry'}
+            className="flex items-center justify-center p-2 rounded-lg hover:bg-slate-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            <span
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                socketConnected ? 'bg-emerald-500 shadow-xs shadow-emerald-500/50 animate-pulse' : 'bg-amber-400'
+              }`}
+            />
+          </div>
+        </Tooltip>
+
         {/* Real-time Notification Bell */}
         <div className="relative">
           <button
@@ -165,8 +212,8 @@ export const Header: React.FC = () => {
               <div className="text-sm font-semibold text-slate-800 leading-tight">
                 {user ? `${user.first_name} ${user.last_name}` : 'Aditya Admin'}
               </div>
-              <div className="text-xs font-mono text-slate-400 leading-tight mt-0.5">
-                {role}
+              <div className="text-xs text-slate-400 leading-tight mt-0.5 truncate max-w-[150px]">
+                {user?.email || 'admin@entrix.local'}
               </div>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400 ml-1" aria-hidden="true" />
@@ -178,7 +225,20 @@ export const Header: React.FC = () => {
               aria-label="Demo persona switcher"
               className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-30 divide-y divide-slate-100"
             >
-              <div className="px-4 py-2 bg-slate-50/50">
+              {/* Current Active Persona Summary */}
+              <div className="px-4 py-3 bg-slate-50/70 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-900">
+                    {user ? `${user.first_name} ${user.last_name}` : 'Aditya Admin'}
+                  </span>
+                  <StatusPill variant="neutral" size="sm">
+                    {role}
+                  </StatusPill>
+                </div>
+                <p className="text-xs text-muted font-mono">{user?.email || 'admin@entrix.local'}</p>
+              </div>
+
+              <div className="px-4 py-2 bg-slate-50/30">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase font-mono font-bold text-slate-500">Switch Demo Persona</span>
                   <span className="text-xs text-indigo-600 font-medium">RBAC Simulator</span>

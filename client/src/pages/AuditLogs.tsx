@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, RefreshCw, Info } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
+import { Tooltip } from '../components/ui/Tooltip';
 import { formatDateTime } from '../lib/format';
 
 interface AuditLogEntry {
@@ -53,10 +54,15 @@ export const AuditLogs: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cryptographic Audit Trail Explorer"
-        subtitle="SHA-256 chained governance records with mathematical tamper validation"
+        title="Tamper-evident activity log"
+        subtitle="Cryptographically verified state mutation chain"
         actions={
           <div className="flex items-center gap-2">
+            <Tooltip content="SHA-256 chained governance records with mathematical tamper validation">
+              <span className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <Info className="w-4 h-4" />
+              </span>
+            </Tooltip>
             <Button variant="outline" size="sm" onClick={fetchAuditLogs} disabled={loading}>
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
               Re-verify Chain
@@ -94,8 +100,13 @@ export const AuditLogs: React.FC = () => {
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-800">Immutable State Mutating Events (PostgreSQL B-Tree)</h3>
-          <span className="text-xs text-slate-400 font-mono">{logs.length} Live Audit Blocks</span>
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-slate-800">Audit Events</h3>
+            <Tooltip content="Immutable state mutating events recorded in PostgreSQL B-Tree ledger">
+              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Audit events details" />
+            </Tooltip>
+          </div>
+          <span className="text-xs text-slate-400 font-mono">{logs.length} records</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">

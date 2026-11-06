@@ -8,9 +8,11 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { AlertTriangle, Cpu } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
+import { StatusPill } from '../components/ui/StatusPill';
+import { Tooltip as UITooltip } from '../components/ui/Tooltip';
 
 export const AIInsights: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
@@ -83,16 +85,24 @@ export const AIInsights: React.FC = () => {
       {/* Header */}
       <PageHeader
         title="AI Decision Intelligence Suite"
-        subtitle="Scikit-learn Random Forest regression and Isolation Forest outlier analytics"
+        subtitle="Demand forecasting and anomaly detection"
         actions={
           isFallback ? (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3 text-amber-600" /> Statistical Fallback Active ({modelName})
-            </span>
+            <UITooltip content={`Statistical Fallback Active (${modelName})`}>
+              <div>
+                <StatusPill variant="warning" size="sm">
+                  Fallback active
+                </StatusPill>
+              </div>
+            </UITooltip>
           ) : (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-              <Cpu className="w-3 h-3 text-emerald-600" /> Python FastAPI ML Live ({modelName})
-            </span>
+            <UITooltip content={`Python FastAPI ML Live (${modelName})`}>
+              <div>
+                <StatusPill variant="success" size="sm">
+                  Model live
+                </StatusPill>
+              </div>
+            </UITooltip>
           )
         }
       />
@@ -104,7 +114,12 @@ export const AIInsights: React.FC = () => {
             <h3 className="text-sm font-semibold text-slate-800">
               {forecastData.length > 0 ? `${forecastData.length}-Day` : '14-Day'} Demand Curve Prediction (SKU: RAW-STL-001)
             </h3>
-            <p className="text-xs text-slate-500">RandomForestRegressor (50 Estimators, Lag 1/3/7 Features)</p>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+              <span>Forecast model</span>
+              <UITooltip content="RandomForestRegressor (50 Estimators, Lag 1/3/7 Features)">
+                <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Model hyperparameters" />
+              </UITooltip>
+            </div>
           </div>
           <div className="text-right font-mono">
             <span className="text-xs text-slate-400">Recommended Restock: </span>

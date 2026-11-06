@@ -425,7 +425,7 @@ export const Procurement: React.FC = () => {
                       <td colSpan={7} className="py-10 text-center text-slate-400 font-mono">
                         <div className="flex items-center justify-center gap-2">
                           <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
-                          <span>Loading requisitions from PostgreSQL...</span>
+                          <span>Loading requisitions...</span>
                         </div>
                       </td>
                     </tr>
@@ -641,7 +641,7 @@ export const Procurement: React.FC = () => {
                       <td colSpan={7} className="py-10 text-center text-slate-400 font-mono">
                         <div className="flex items-center justify-center gap-2">
                           <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
-                          <span>Loading supplier invoices from PostgreSQL...</span>
+                          <span>Loading supplier invoices...</span>
                         </div>
                       </td>
                     </tr>
@@ -757,7 +757,7 @@ export const Procurement: React.FC = () => {
                     <td colSpan={6} className="py-10 text-center text-slate-400 font-mono">
                       <div className="flex items-center justify-center gap-2">
                         <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
-                        <span>Loading suppliers from PostgreSQL...</span>
+                        <span>Loading suppliers...</span>
                       </div>
                     </td>
                   </tr>

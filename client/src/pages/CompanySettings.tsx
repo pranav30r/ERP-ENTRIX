@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Users, Shield, Plus, CheckCircle, AlertCircle, RefreshCw, Download, Trash2, AlertTriangle } from 'lucide-react';
+import { Building2, Users, Shield, Plus, CheckCircle, AlertCircle, RefreshCw, Download, Trash2, AlertTriangle, UserX, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Modal } from '../components/ui/Modal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { IconButton } from '../components/ui/IconButton';
 import { PageHeader } from '../components/ui/PageHeader';
 
 interface CompanyProfile {
@@ -486,23 +487,22 @@ export const CompanySettings: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       {isCurrentUser ? (
                         <span className="text-xs text-slate-400 font-medium italic">Current Account</span>
+                      ) : m.is_active ? (
+                        <IconButton
+                          icon={UserX}
+                          variant="danger"
+                          tooltip="Deactivate team member"
+                          aria-label={`Deactivate ${m.first_name} ${m.last_name}`}
+                          onClick={() => setMemberToDeactivate(m)}
+                        />
                       ) : (
-                        <button
-                          onClick={() => {
-                            if (m.is_active) {
-                              setMemberToDeactivate(m);
-                            } else {
-                              handleToggleMemberStatus(m.id, false);
-                            }
-                          }}
-                          className={`text-xs font-semibold transition ${
-                            m.is_active
-                              ? 'text-rose-600 hover:text-rose-700'
-                              : 'text-indigo-600 hover:text-indigo-700'
-                          }`}
-                        >
-                          {m.is_active ? 'Deactivate' : 'Reactivate'}
-                        </button>
+                        <IconButton
+                          icon={UserCheck}
+                          variant="ghost"
+                          tooltip="Reactivate team member"
+                          aria-label={`Reactivate ${m.first_name} ${m.last_name}`}
+                          onClick={() => handleToggleMemberStatus(m.id, false)}
+                        />
                       )}
                     </td>
                   </tr>
@@ -725,15 +725,15 @@ export const CompanySettings: React.FC = () => {
         </div>
       )}
       {/* Deactivate Member Confirmation Modal */}
-      <Modal
-        isOpen={Boolean(memberToDeactivate)}
-        onClose={() => setMemberToDeactivate(null)}
+      <ConfirmDialog
+        open={Boolean(memberToDeactivate)}
+        onCancel={() => setMemberToDeactivate(null)}
         title="Confirm Member Deactivation"
         description={`Are you sure you want to deactivate ${memberToDeactivate?.first_name} ${memberToDeactivate?.last_name} (${memberToDeactivate?.email})? They will immediately lose access to the ENTRIX ERP organization.`}
         confirmLabel={deactivatingMember ? 'Deactivating...' : 'Deactivate Member'}
         cancelLabel="Cancel"
-        isDestructive={true}
-        confirmDisabled={deactivatingMember}
+        variant="danger"
+        loading={deactivatingMember}
         onConfirm={handleConfirmDeactivate}
       />
     </div>

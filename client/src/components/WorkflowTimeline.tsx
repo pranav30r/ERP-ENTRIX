@@ -1,5 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Clock } from 'lucide-react';
+import { StatusPill } from './ui/StatusPill';
+import { Tooltip } from './ui/Tooltip';
 
 export type ProcurementStage =
   | 'DRAFT'
@@ -18,12 +20,12 @@ interface WorkflowTimelineProps {
 }
 
 const STAGES = [
-  { key: 'REQUEST', title: 'Requisition Created' },
-  { key: 'MANAGER', title: 'Manager Sign-off' },
-  { key: 'FINANCE', title: 'Finance Sign-off' },
-  { key: 'PO', title: 'Purchase Order' },
-  { key: 'GRN', title: 'Goods Received' },
-  { key: 'INVOICE', title: 'Invoice Cleared' }
+  { key: 'REQUEST', monoLabel: '1. REQUEST', title: 'Requisition Created' },
+  { key: 'MANAGER', monoLabel: '2. MANAGER SIGN-OFF', title: 'Manager Sign-off' },
+  { key: 'FINANCE', monoLabel: '3. FINANCE SIGN-OFF', title: 'Finance Sign-off' },
+  { key: 'PO', monoLabel: '4. PURCHASE ORDER', title: 'Purchase Order' },
+  { key: 'GRN', monoLabel: '5. GOODS RECEIPT', title: 'Goods Received' },
+  { key: 'INVOICE', monoLabel: '6. INVOICE MATCH', title: 'Invoice Cleared' }
 ];
 
 export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({ currentStage, amount }) => {
@@ -57,13 +59,13 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({ currentStage
         </div>
         <div className="flex items-center gap-2">
           {isFinanceBypassed ? (
-            <span className="text-xs font-mono font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200">
+            <StatusPill variant="success" size="sm">
               Low-Value Fast Track (&lt; ₹10k)
-            </span>
+            </StatusPill>
           ) : (
-            <span className="text-xs font-mono font-medium bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
+            <StatusPill variant="warning" size="sm">
               Dual-Tier Sign-off Required (&ge; ₹10k)
-            </span>
+            </StatusPill>
           )}
         </div>
       </div>
@@ -75,31 +77,33 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({ currentStage
           const isCurrent = idx === Math.floor(currentIndex);
 
           return (
-            <div
-              key={step.key}
-              className={`
-                relative p-4 xl:p-5 rounded-xl border transition-all text-left flex items-center justify-between gap-3 min-h-[72px]
-                ${isCurrent
-                  ? 'bg-indigo-50/70 border-indigo-300 shadow-sm'
-                  : isCompleted
-                  ? 'bg-slate-50/80 border-slate-200'
-                  : 'bg-white border-slate-200/80'
-                }
-              `}
-            >
-              <span className={`text-sm xl:text-[15px] font-semibold truncate ${
-                isCurrent ? 'text-indigo-950 font-bold' : isCompleted ? 'text-slate-800' : 'text-slate-400'
-              }`}>
-                {step.title}
-              </span>
-              {isCompleted ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              ) : isCurrent ? (
-                <Clock className="w-5 h-5 text-indigo-600 shrink-0" />
-              ) : (
-                <div className="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></div>
-              )}
-            </div>
+            <Tooltip key={step.key} content={`Step ${step.monoLabel}`}>
+              <div
+                tabIndex={0}
+                className={`
+                  relative p-4 xl:p-5 rounded-xl border transition-all text-left flex items-center justify-between gap-3 min-h-[72px] cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                  ${isCurrent
+                    ? 'bg-indigo-50/70 border-indigo-300 shadow-sm'
+                    : isCompleted
+                    ? 'bg-slate-50/80 border-slate-200'
+                    : 'bg-white border-slate-200/80'
+                  }
+                `}
+              >
+                <span className={`text-sm xl:text-[15px] font-semibold truncate ${
+                  isCurrent ? 'text-indigo-950 font-bold' : isCompleted ? 'text-slate-800' : 'text-slate-400'
+                }`}>
+                  {step.title}
+                </span>
+                {isCompleted ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                ) : isCurrent ? (
+                  <Clock className="w-5 h-5 text-indigo-600 shrink-0" />
+                ) : (
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></div>
+                )}
+              </div>
+            </Tooltip>
           );
         })}
       </div>

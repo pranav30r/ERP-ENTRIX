@@ -297,7 +297,7 @@ export const HR: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">Loading directory from PostgreSQL...</td>
+                      <td colSpan={7} className="py-8 text-center text-slate-400">Loading directory records...</td>
                     </tr>
                   ) : employees.length === 0 ? (
                     <tr>

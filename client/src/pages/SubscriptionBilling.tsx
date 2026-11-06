@@ -11,6 +11,8 @@ import {
 import { API_BASE_URL } from '../services/api';
 import { formatDateTime } from '../lib/format';
 import { PageHeader } from '../components/ui/PageHeader';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { IconButton } from '../components/ui/IconButton';
 
 const PLAN_TIER_RANK: Record<string, number> = {
   FREE: 0,
@@ -73,6 +75,8 @@ export const SubscriptionBilling: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [confirmCancelAutoRenew, setConfirmCancelAutoRenew] = useState(false);
+  const [pendingPlanSwitch, setPendingPlanSwitch] = useState<string | null>(null);
 
   const handleDownloadInvoice = (inv: Invoice) => {
     if (inv.hosted_invoice_url && !inv.hosted_invoice_url.includes('.local')) {
@@ -312,7 +316,13 @@ export const SubscriptionBilling: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={handleToggleAutoRenew}
+              onClick={() => {
+                if (sub?.cancel_at_period_end) {
+                  handleToggleAutoRenew();
+                } else {
+                  setConfirmCancelAutoRenew(true);
+                }
+              }}
               disabled={actionLoading}
               className={`px-4 py-2 rounded-lg text-xs font-semibold border transition ${
                 sub?.cancel_at_period_end
@@ -400,7 +410,7 @@ export const SubscriptionBilling: React.FC = () => {
         <div className="mb-4">
           <h2 className="text-lg font-bold text-slate-900">Available Subscription Tiers</h2>
           <p className="text-xs text-slate-500">
-            Select a plan to immediately switch with deterministic sandbox zero-cost billing.
+            Choose a plan. Changes apply immediately.
           </p>
         </div>
 
@@ -457,7 +467,7 @@ export const SubscriptionBilling: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => handleSelectPlan(p.tier)}
+                  onClick={() => setPendingPlanSwitch(p.tier)}
                   disabled={isCurrent || actionLoading}
                   className={`w-full py-2.5 px-4 rounded-lg text-xs font-semibold transition ${
                     isCurrent
@@ -522,13 +532,13 @@ export const SubscriptionBilling: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
+                      <IconButton
+                        icon={Download}
+                        tooltip="View & download electronic receipt"
+                        aria-label={`View receipt for invoice ${inv.invoice_number}`}
+                        variant="ghost"
                         onClick={() => handleDownloadInvoice(inv)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
-                      >
-                        <Download className="w-3.5 h-3.5" /> View Receipt
-                      </button>
+                      />
                     </td>
                   </tr>
                 ))
@@ -537,6 +547,44 @@ export const SubscriptionBilling: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Confirm Cancel Auto-Renew Modal */}
+      <ConfirmDialog
+        open={confirmCancelAutoRenew}
+        onCancel={() => setConfirmCancelAutoRenew(false)}
+        title="Confirm Cancellation of Auto-Renew"
+        description="Are you sure you want to cancel auto-renewal? Your current subscription benefits remain active until the end of this billing cycle, after which your account will revert to the Free tier."
+        confirmLabel="Cancel Auto-Renew"
+        cancelLabel="Keep Auto-Renew"
+        variant="danger"
+        loading={actionLoading}
+        onConfirm={async () => {
+          setConfirmCancelAutoRenew(false);
+          await handleToggleAutoRenew();
+        }}
+      />
+
+      {/* Confirm Plan Switch / Downgrade Modal */}
+      <ConfirmDialog
+        open={Boolean(pendingPlanSwitch)}
+        onCancel={() => setPendingPlanSwitch(null)}
+        title={`Confirm Subscription Change to ${pendingPlanSwitch}`}
+        description={`Are you sure you want to change your organization plan to ${pendingPlanSwitch}? Your feature access and resource limits will immediately adapt to this tier.`}
+        confirmLabel={actionLoading ? 'Processing...' : 'Confirm Plan Switch'}
+        cancelLabel="Cancel"
+        variant={
+          (PLAN_TIER_RANK[pendingPlanSwitch || 'FREE'] ?? 0) <
+          (PLAN_TIER_RANK[sub?.plan_tier.toUpperCase() || 'FREE'] ?? 0)
+            ? 'danger'
+            : 'default'
+        }
+        loading={actionLoading}
+        onConfirm={async () => {
+          const target = pendingPlanSwitch;
+          setPendingPlanSwitch(null);
+          if (target) await handleSelectPlan(target);
+        }}
+      />
     </div>
   );
 };

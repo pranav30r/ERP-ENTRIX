@@ -6,14 +6,18 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   Plus, 
-  CheckCircle2,
-  Package,
-  Layers,
-  DollarSign,
-  RefreshCw
+  CheckCircle2, 
+  Package, 
+  Layers, 
+  DollarSign, 
+  RefreshCw,
+  SlidersHorizontal,
+  Info
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { IconButton } from '../components/ui/IconButton';
+import { Tooltip } from '../components/ui/Tooltip';
 import { PageHeader } from '../components/ui/PageHeader';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -241,15 +245,20 @@ export const Inventory: React.FC = () => {
 
         <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Storage Registry</span>
+            <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Database</span>
             <Layers className="w-6 h-6 text-blue-500" />
           </div>
           <div className="mt-4 flex items-baseline gap-2.5">
             <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">Online</span>
-            <span className="text-xs text-slate-400 font-mono">PostgreSQL 16</span>
+            <Tooltip content="PostgreSQL 16 · ACID transaction isolation">
+              <span className="inline-flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+                <span>v16</span>
+                <Info className="w-3 h-3 text-slate-400" />
+              </span>
+            </Tooltip>
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-mono">
-            ACID transaction isolation
+            Relational storage engine
           </div>
         </div>
       </div>
@@ -288,7 +297,7 @@ export const Inventory: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="py-4 px-6 border-b border-slate-100 flex flex-row items-center justify-between">
           <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">
-            Master SKU Inventory Catalog (PostgreSQL Live)
+            Inventory Catalog
           </h3>
           <span className="text-xs text-slate-400 font-mono">{filteredItems.length} records</span>
         </div>
@@ -372,15 +381,16 @@ export const Inventory: React.FC = () => {
                         </td>
                         <td className="py-4 px-6 text-right">
                           {canManage ? (
-                            <button
+                            <IconButton
+                              icon={SlidersHorizontal}
+                              tooltip="Adjust stock levels"
+                              aria-label={`Adjust stock for ${item.name}`}
+                              variant="ghost"
                               onClick={() => {
                                 setSelectedItem(item);
                                 setIsAdjustModalOpen(true);
                               }}
-                              className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                            >
-                              Adjust Stock
-                            </button>
+                            />
                           ) : (
                             <span className="text-xs font-mono text-slate-400">Read-Only</span>
                           )}

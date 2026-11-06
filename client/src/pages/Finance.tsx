@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft, Info } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
+import { Tooltip } from '../components/ui/Tooltip';
 import { formatDateTime } from '../lib/format';
 
 export const Finance: React.FC = () => {
@@ -107,7 +108,7 @@ export const Finance: React.FC = () => {
     <div className="space-y-6">
       <PageHeader
         title="Finance & General Ledger"
-        subtitle="ACID-compliant double entry accounting with balanced debit/credit audit"
+        subtitle="Double-entry journal with balanced debits and credits"
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={fetchLedger} disabled={loading}>
@@ -185,8 +186,12 @@ export const Finance: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
               <div className="flex items-center justify-between text-xs text-muted mb-1">
-                <span>Total Debits Posted</span>
-                <span className="text-emerald-600 font-bold font-mono">POSTGRESQL</span>
+                <div className="flex items-center gap-1.5">
+                  <span>Total Debits Posted</span>
+                  <Tooltip content="Source: PostgreSQL ledger">
+                    <Info className="w-3.5 h-3.5 text-muted cursor-pointer" aria-label="Debits source info" />
+                  </Tooltip>
+                </div>
               </div>
               <div className="text-3xl font-bold text-text font-mono">
                 ₹{summary.total_debits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -194,8 +199,12 @@ export const Finance: React.FC = () => {
             </div>
             <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
               <div className="flex items-center justify-between text-xs text-muted mb-1">
-                <span>Total Credits Posted</span>
-                <span className="text-emerald-600 font-bold font-mono">POSTGRESQL</span>
+                <div className="flex items-center gap-1.5">
+                  <span>Total Credits Posted</span>
+                  <Tooltip content="Source: PostgreSQL ledger">
+                    <Info className="w-3.5 h-3.5 text-muted cursor-pointer" aria-label="Credits source info" />
+                  </Tooltip>
+                </div>
               </div>
               <div className="text-3xl font-bold text-text font-mono">
                 ₹{summary.total_credits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -207,7 +216,7 @@ export const Finance: React.FC = () => {
           <div className="bg-surface border border-border rounded-lg shadow-card overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <h3 className="text-sm font-semibold text-text">Double-Entry Journal Postings</h3>
-              <span className="text-xs text-muted font-mono">{entries.length} PostgreSQL Records</span>
+              <span className="text-xs text-muted">{entries.length} records</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">

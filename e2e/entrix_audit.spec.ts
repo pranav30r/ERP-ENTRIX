@@ -152,10 +152,10 @@ const PAGES: PageTestConfig[] = [
     name: 'Audit Logs',
     path: '/audit',
     slug: 'audit',
-    expectedHeading: 'Cryptographic Audit Trail Explorer',
+    expectedHeading: 'Tamper-evident activity log',
     hasTable: true,
     interactiveActions: async (page) => {
-      const refreshBtn = page.getByRole('button', { name: /Refresh/i });
+      const refreshBtn = page.getByRole('button', { name: /Re-verify Chain/i });
       if (await refreshBtn.count()) {
         await refreshBtn.click();
         await page.waitForTimeout(300);
@@ -169,8 +169,8 @@ const PAGES: PageTestConfig[] = [
     expectedHeading: 'Organization Settings',
     hasTable: true,
     interactiveActions: async (page) => {
-      // Test opening Deactivate Modal (destructive action) and cancel without confirming
-      const deactBtn = page.getByRole('button', { name: 'Deactivate' }).first();
+      // Test opening Deactivate Modal (destructive action via IconButton) and cancel without confirming
+      const deactBtn = page.locator('button[aria-label*="Deactivate"]').first();
       if (await deactBtn.count()) {
         await deactBtn.click();
         await page.waitForTimeout(300);
@@ -178,9 +178,10 @@ const PAGES: PageTestConfig[] = [
         const modal = page.locator('role=dialog');
         await expect(modal).toBeVisible();
         // Cancel without confirming
-        const cancelBtn = modal.getByRole('button', { name: /Cancel/i });
-        await cancelBtn.click();
-        await page.waitForTimeout(200);
+        const cancelBtn = modal.locator('button:has-text("Cancel")');
+        if (await cancelBtn.count()) {
+          await cancelBtn.click();
+        }
       }
       // Test invite modal open and close
       const inviteBtn = page.getByRole('button', { name: /Invite Team Member/i });

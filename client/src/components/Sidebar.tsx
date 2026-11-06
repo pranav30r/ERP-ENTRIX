@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -41,6 +41,7 @@ const navigationItems: NavItem[] = [
 export const Sidebar: React.FC = () => {
   const { hasRole } = useAuth();
   const { mobileOpen, setMobileOpen } = useNav();
+  const location = useLocation();
 
   // Close mobile sidebar on Escape key press
   useEffect(() => {
@@ -89,15 +90,17 @@ export const Sidebar: React.FC = () => {
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isAuthorized = !item.requiredRoles || hasRole(item.requiredRoles);
+            const isActive = location.pathname === item.path;
 
             return (
               <NavLink
                 key={item.name}
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => `
+                aria-current={isActive ? 'page' : undefined}
+                className={({ isActive: linkActive }) => `
                   group flex items-center justify-between px-3.5 h-11 rounded-lg text-sm xl:text-[15px] font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
-                  ${isActive
+                  ${linkActive
                     ? 'bg-charcoal-800 text-white font-semibold shadow-inner border border-charcoal-700/60'
                     : isAuthorized
                       ? 'text-slate-300 hover:text-white hover:bg-charcoal-850'

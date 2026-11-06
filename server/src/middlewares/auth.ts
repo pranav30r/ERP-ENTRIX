@@ -78,8 +78,8 @@ export const requireRole = (allowedRoles: string[]) => {
       return;
     }
 
-    // PLATFORM_ADMIN or SUPER_ADMIN bypass if explicitly allowed
-    if (user.role_name === 'PLATFORM_ADMIN' && allowedRoles.includes('PLATFORM_ADMIN')) {
+    // SUPER_ADMIN and PLATFORM_ADMIN have full administrative authority across modules
+    if (user.role_name === 'SUPER_ADMIN' || user.role_name === 'PLATFORM_ADMIN') {
       return next();
     }
 

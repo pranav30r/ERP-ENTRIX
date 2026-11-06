@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, ChevronDown, Loader2, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, Search, ChevronDown, Loader2, Menu, Sparkles } from 'lucide-react';
 import { getSocket } from '../services/socket';
 import { useAuth, DEMO_PERSONAS } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
@@ -235,6 +236,17 @@ export const Header: React.FC = () => {
                     </button>
                   );
                 })}
+              </div>
+
+              <div className="p-2 bg-slate-50 border-t border-slate-100">
+                <Link
+                  to="/register"
+                  onClick={() => setShowRoleSwitcher(false)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/60 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Onboard New Tenant Company</span>
+                </Link>
               </div>
             </div>
           )}

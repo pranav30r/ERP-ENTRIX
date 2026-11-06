@@ -2,8 +2,16 @@ import { sequelize } from '../../config/db';
 import { Subscription, SubscriptionHistory, SubscriptionInvoice, Tenant, TenantUsageCounter, User } from '../../models';
 import { PLANS, getPlanEntitlement, PlanTier } from '../../config/plans';
 import { billingAdapter } from './mockBillingAdapter';
-import { WebhookEventPayload } from './types';
+import { stripeAdapter } from './stripeBillingAdapter';
+import { BillingProviderInterface, WebhookEventPayload } from './types';
 import { Op } from 'sequelize';
+
+const getActiveBillingAdapter = (): BillingProviderInterface => {
+  if (process.env.STRIPE_SECRET_KEY && process.env.ALLOW_MOCK_BILLING !== 'true') {
+    return stripeAdapter;
+  }
+  return billingAdapter;
+};
 
 export class BillingService {
   /**
@@ -69,7 +77,7 @@ export class BillingService {
       throw new Error(`Invalid plan tier requested: ${targetPlan}`);
     }
 
-    return await billingAdapter.createCheckoutSession({
+    return await getActiveBillingAdapter().createCheckoutSession({
       tenantId,
       targetPlan: normalizedPlan,
       customerEmail
@@ -80,12 +88,13 @@ export class BillingService {
    * Idempotent webhook event processor supporting simulated and live events.
    */
   public async processWebhook(payload: any, signature?: string): Promise<{ success: boolean; eventType: string; duplicate?: boolean }> {
-    const isValid = billingAdapter.verifyWebhookSignature(payload, signature);
+    const adapter = getActiveBillingAdapter();
+    const isValid = adapter.verifyWebhookSignature(payload, signature);
     if (!isValid) {
       throw new Error('Invalid webhook signature');
     }
 
-    const event: WebhookEventPayload = billingAdapter.parseWebhookEvent(payload);
+    const event: WebhookEventPayload = adapter.parseWebhookEvent(payload);
 
     return await sequelize.transaction(async (t) => {
       // Idempotency guard: check if this event ID has already been recorded

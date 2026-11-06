@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getLedgerEntries, createJournalEntry } from '../controllers/financeController';
+import {
+  getLedgerEntries,
+  createJournalEntry,
+  createSalesInvoice,
+  recordCustomerReceipt,
+  getAccountsReceivableSummary
+} from '../controllers/financeController';
 import { authenticateJWT, requireRole, requireTenant } from '../middlewares/auth';
 import { requireModuleEntitlement } from '../middlewares/entitlements';
 
@@ -10,5 +16,8 @@ router.use(requireTenant);
 
 router.get('/ledger', requireModuleEntitlement('FINANCE'), requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), getLedgerEntries);
 router.post('/journal', requireModuleEntitlement('FINANCE'), requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), createJournalEntry);
+router.post('/sales-invoice', requireModuleEntitlement('FINANCE'), requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), createSalesInvoice);
+router.post('/customer-receipt', requireModuleEntitlement('FINANCE'), requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), recordCustomerReceipt);
+router.get('/receivables', requireModuleEntitlement('FINANCE'), requireRole(['COMPANY_ADMIN', 'SUPER_ADMIN', 'FINANCE_OFFICER']), getAccountsReceivableSummary);
 
 export default router;

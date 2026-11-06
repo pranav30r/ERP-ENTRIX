@@ -50,6 +50,28 @@ export const loginAsUser = async (email: string, password = 'Admin@123') => {
   throw new Error('Authentication failed');
 };
 
+export interface OnboardPayload {
+  company_name: string;
+  slug: string;
+  admin_email: string;
+  admin_password: string;
+  admin_first_name: string;
+  admin_last_name: string;
+}
+
+export const onboardNewCompany = async (payload: OnboardPayload) => {
+  const res = await axios.post(`${API_BASE_URL}/tenants/onboard`, payload);
+  if (res.data.success && res.data.access_token) {
+    localStorage.setItem('entrix_token', res.data.access_token);
+    if (res.data.refresh_token) {
+      localStorage.setItem('entrix_refresh_token', res.data.refresh_token);
+    }
+    localStorage.setItem('entrix_user', JSON.stringify(res.data.user));
+    return res.data;
+  }
+  throw new Error(res.data.error || 'Onboarding failed');
+};
+
 // Refresh access token securely
 export const refreshSession = async (): Promise<string | null> => {
   const refreshToken = localStorage.getItem('entrix_refresh_token');

@@ -185,3 +185,198 @@ export const createJournalEntry = async (req: Request, res: Response): Promise<v
     res.status(500).json({ success: false, error: 'Error posting journal entry. Transaction rolled back.' });
   }
 };
+
+/**
+ * Creates an outbound customer sales invoice and automatically posts balanced AR journal rows:
+ * Debit 1100 - Accounts Receivable
+ * Credit 4000 - Sales Revenue
+ */
+export const createSalesInvoice = async (req: Request, res: Response): Promise<void> => {
+  const transaction = await sequelize.transaction();
+  try {
+    const authUser = (req as any).user;
+    const tenantId = authUser?.tenant_id || (req as any).tenantId;
+    const { customer_name, invoice_number, amount, description } = req.body;
+
+    const numAmount = Number(amount);
+    if (!customer_name || !invoice_number || isNaN(numAmount) || numAmount <= 0) {
+      await transaction.rollback();
+      res.status(400).json({
+        success: false,
+        error: 'Valid customer_name, invoice_number, and positive amount are required.'
+      });
+      return;
+    }
+
+    const txUuid = crypto.randomUUID();
+    const invCode = String(invoice_number).trim();
+    const custName = String(customer_name).trim();
+
+    // 1. Post balanced AR entry
+    const entries = await LedgerEntry.bulkCreate([
+      {
+        tenant_id: tenantId,
+        transaction_uuid: txUuid,
+        account_code: '1100 - Accounts Receivable',
+        debit_amount: numAmount,
+        credit_amount: 0.00,
+        reference_type: 'CUSTOMER_INVOICE'
+      },
+      {
+        tenant_id: tenantId,
+        transaction_uuid: txUuid,
+        account_code: '4000 - Sales Revenue',
+        debit_amount: 0.00,
+        credit_amount: numAmount,
+        reference_type: 'CUSTOMER_INVOICE'
+      }
+    ], { transaction });
+
+    // 2. Audit log
+    await AuditService.logMutation(
+      authUser ? authUser.id : null,
+      'ISSUE_CUSTOMER_INVOICE',
+      'ledger_entries',
+      txUuid,
+      {
+        customer_name: custName,
+        invoice_number: invCode,
+        amount: numAmount,
+        description: description || 'Customer Sales Invoice'
+      },
+      transaction,
+      tenantId
+    );
+
+    await transaction.commit();
+
+    res.status(201).json({
+      success: true,
+      message: `Customer invoice ${invCode} issued for ${custName}. General ledger updated with Dr 1100 / Cr 4000.`,
+      data: {
+        transaction_uuid: txUuid,
+        invoice_number: invCode,
+        customer_name: custName,
+        amount: numAmount,
+        entries
+      }
+    });
+  } catch (error) {
+    await transaction.rollback();
+    res.status(500).json({ success: false, error: 'Failed to issue customer invoice.' });
+  }
+};
+
+/**
+ * Records receipt of customer payment against Accounts Receivable:
+ * Debit 1010 - Operating Cash
+ * Credit 1100 - Accounts Receivable
+ */
+export const recordCustomerReceipt = async (req: Request, res: Response): Promise<void> => {
+  const transaction = await sequelize.transaction();
+  try {
+    const authUser = (req as any).user;
+    const tenantId = authUser?.tenant_id || (req as any).tenantId;
+    const { invoice_number, amount, customer_name, payment_method } = req.body;
+
+    const numAmount = Number(amount);
+    if (!invoice_number || isNaN(numAmount) || numAmount <= 0) {
+      await transaction.rollback();
+      res.status(400).json({
+        success: false,
+        error: 'Valid invoice_number and positive amount are required.'
+      });
+      return;
+    }
+
+    const txUuid = crypto.randomUUID();
+    const invCode = String(invoice_number).trim();
+
+    // 1. Post balanced Receipt entry
+    const entries = await LedgerEntry.bulkCreate([
+      {
+        tenant_id: tenantId,
+        transaction_uuid: txUuid,
+        account_code: '1010 - Operating Cash',
+        debit_amount: numAmount,
+        credit_amount: 0.00,
+        reference_type: 'CUSTOMER_PAYMENT'
+      },
+      {
+        tenant_id: tenantId,
+        transaction_uuid: txUuid,
+        account_code: '1100 - Accounts Receivable',
+        debit_amount: 0.00,
+        credit_amount: numAmount,
+        reference_type: 'CUSTOMER_PAYMENT'
+      }
+    ], { transaction });
+
+    // 2. Audit log
+    await AuditService.logMutation(
+      authUser ? authUser.id : null,
+      'COLLECT_CUSTOMER_PAYMENT',
+      'ledger_entries',
+      txUuid,
+      {
+        invoice_number: invCode,
+        customer_name: customer_name || 'Direct Customer',
+        amount: numAmount,
+        payment_method: payment_method || 'BANK_TRANSFER'
+      },
+      transaction,
+      tenantId
+    );
+
+    await transaction.commit();
+
+    res.status(200).json({
+      success: true,
+      message: `Payment of ₹${numAmount} recorded for invoice ${invCode}. General ledger updated with Dr 1010 / Cr 1100.`,
+      data: {
+        transaction_uuid: txUuid,
+        invoice_number: invCode,
+        amount: numAmount,
+        entries
+      }
+    });
+  } catch (error) {
+    await transaction.rollback();
+    res.status(500).json({ success: false, error: 'Failed to record customer receipt.' });
+  }
+};
+
+/**
+ * Returns summary metrics for Accounts Receivable (total invoiced, collected, outstanding).
+ */
+export const getAccountsReceivableSummary = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authUser = (req as any).user;
+    const tenantId = authUser?.tenant_id || (req as any).tenantId;
+
+    const arEntries = await LedgerEntry.findAll({
+      where: {
+        tenant_id: tenantId,
+        account_code: '1100 - Accounts Receivable'
+      },
+      order: [['posted_at', 'DESC']],
+      limit: 100
+    });
+
+    const totalInvoiced = arEntries.reduce((sum, e) => sum + Number(e.debit_amount || 0), 0);
+    const totalCollected = arEntries.reduce((sum, e) => sum + Number(e.credit_amount || 0), 0);
+    const outstandingBalance = totalInvoiced - totalCollected;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        total_invoiced: totalInvoiced,
+        total_collected: totalCollected,
+        outstanding_balance: Math.max(0, outstandingBalance),
+        recent_transactions: arEntries.slice(0, 20)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch Accounts Receivable summary.' });
+  }
+};

@@ -102,7 +102,9 @@ export const AIInsights: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
-            <h3 className="text-sm font-semibold text-slate-800">14-Day Demand Curve Prediction (SKU: RAW-STL-001)</h3>
+            <h3 className="text-sm font-semibold text-slate-800">
+              {forecastData.length > 0 ? `${forecastData.length}-Day` : '14-Day'} Demand Curve Prediction (SKU: RAW-STL-001)
+            </h3>
             <p className="text-xs text-slate-500">RandomForestRegressor (50 Estimators, Lag 1/3/7 Features)</p>
           </div>
           <div className="text-right font-mono">

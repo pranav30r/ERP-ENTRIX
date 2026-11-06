@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { formatDateTime } from '../lib/format';
 
 export const Finance: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'RECEIVABLES'>('LEDGER');
@@ -105,8 +106,8 @@ export const Finance: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Finance & General Ledger</h2>
-          <p className="text-sm text-slate-500 dark:text-charcoal-400 mt-0.5">ACID-compliant double entry accounting with balanced debit/credit audit</p>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Finance & General Ledger</h2>
+          <p className="text-sm text-slate-500 mt-0.5">ACID-compliant double entry accounting with balanced debit/credit audit</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchLedger} disabled={loading} className="dark:border-charcoal-700 dark:text-charcoal-200">
@@ -173,9 +174,9 @@ export const Finance: React.FC = () => {
           <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl font-bold">
             403
           </div>
-          <h3 className="text-sm font-bold text-slate-800 dark:text-white">Access Restricted (RBAC Policy Enforced)</h3>
-          <p className="text-xs text-slate-600 dark:text-charcoal-300 max-w-md mx-auto">{forbiddenError}</p>
-          <span className="text-[11px] text-slate-400 dark:text-charcoal-500 block">Switch to Finance Officer or Super Admin in the top-right header to view ledgers.</span>
+          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-[11px] text-slate-400 block">Switch to Finance Officer or Super Admin in the top-right header to view ledgers.</span>
         </div>
       ) : activeTab === 'LEDGER' ? (
         <>
@@ -202,14 +203,14 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* Ledger Table */}
-          <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-charcoal-800 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-white">Double-Entry Journal Postings</h3>
-              <span className="text-xs text-slate-400 dark:text-charcoal-500 font-mono">{entries.length} PostgreSQL Records</span>
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-800">Double-Entry Journal Postings</h3>
+              <span className="text-xs text-slate-400 font-mono">{entries.length} PostgreSQL Records</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-charcoal-800/60 border-b border-slate-200 dark:border-charcoal-800 text-slate-500 dark:text-charcoal-400 font-mono text-[10px] uppercase">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Entry ID</th>
                     <th className="py-3 px-4 font-semibold">General Ledger Account</th>
@@ -219,29 +220,29 @@ export const Finance: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Posted At</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-charcoal-800 text-slate-700 dark:text-charcoal-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {loading ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-charcoal-500">Loading ledger journal entries...</td>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">Loading ledger journal entries...</td>
                     </tr>
                   ) : entries.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-charcoal-500">No ledger entries posted.</td>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">No ledger entries posted.</td>
                     </tr>
                   ) : (
                     entries.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-charcoal-800/40 font-mono text-xs">
-                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">#{item.id}</td>
-                        <td className="py-3.5 px-4 font-sans font-semibold text-slate-800 dark:text-white">{item.account_code}</td>
-                        <td className="py-3.5 px-4 text-slate-500 dark:text-charcoal-400 font-sans">{item.reference_type || 'N/A'}</td>
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                      <tr key={item.id} className="hover:bg-slate-50 font-mono text-xs">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">#{item.id}</td>
+                        <td className="py-3.5 px-4 font-sans font-semibold text-slate-800">{item.account_code}</td>
+                        <td className="py-3.5 px-4 text-slate-500 font-sans">{item.reference_type || 'N/A'}</td>
+                        <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                           {Number(item.debit_amount) > 0 ? `₹${Number(item.debit_amount).toFixed(2)}` : '—'}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-900 dark:text-white">
+                        <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                           {Number(item.credit_amount) > 0 ? `₹${Number(item.credit_amount).toFixed(2)}` : '—'}
                         </td>
-                        <td className="py-3.5 px-4 text-right text-slate-400 dark:text-charcoal-500 font-sans text-xs">
-                          {new Date(item.posted_at).toLocaleString()}
+                        <td className="py-3.5 px-4 text-right text-slate-500 font-sans text-xs">
+                          {formatDateTime(item.posted_at)}
                         </td>
                       </tr>
                     ))
@@ -306,14 +307,14 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* AR Ledger Postings Table */}
-          <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 dark:border-charcoal-800 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800 dark:text-white">Recent Accounts Receivable Ledger Records</h3>
-              <span className="text-xs text-slate-400 dark:text-charcoal-500 font-mono">{arSummary.recent_transactions.length} Transactions</span>
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-800">Recent Accounts Receivable Ledger Records</h3>
+              <span className="text-xs text-slate-400 font-mono">{arSummary.recent_transactions.length} Transactions</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-charcoal-800/60 border-b border-slate-200 dark:border-charcoal-800 text-slate-500 dark:text-charcoal-400 font-mono text-[10px] uppercase">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Entry ID</th>
                     <th className="py-3 px-4 font-semibold">Type</th>
@@ -322,15 +323,15 @@ export const Finance: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Transaction Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-charcoal-800 text-slate-700 dark:text-charcoal-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {arSummary.recent_transactions.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-slate-400">No customer receivables recorded yet.</td>
                     </tr>
                   ) : (
                     arSummary.recent_transactions.map((tx: any) => (
-                      <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-charcoal-800/40 font-mono text-xs">
-                        <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">#{tx.id}</td>
+                      <tr key={tx.id} className="hover:bg-slate-50 font-mono text-xs">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">#{tx.id}</td>
                         <td className="py-3.5 px-4 font-sans font-semibold">
                           <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${
                             tx.reference_type === 'CUSTOMER_INVOICE' 
@@ -346,8 +347,8 @@ export const Finance: React.FC = () => {
                         <td className="py-3.5 px-4 text-right font-bold text-emerald-600">
                           {Number(tx.credit_amount) > 0 ? `₹${Number(tx.credit_amount).toFixed(2)}` : '—'}
                         </td>
-                        <td className="py-3.5 px-4 text-right text-slate-400 font-sans text-xs">
-                          {new Date(tx.posted_at).toLocaleString()}
+                        <td className="py-3.5 px-4 text-right text-slate-500 font-sans text-xs">
+                          {formatDateTime(tx.posted_at)}
                         </td>
                       </tr>
                     ))
@@ -363,8 +364,8 @@ export const Finance: React.FC = () => {
       {showInvoiceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-slate-200 dark:border-charcoal-800 shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-charcoal-800 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Issue Customer Sales Invoice</h3>
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Issue Customer Sales Invoice</h3>
               <button onClick={() => setShowInvoiceModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
             </div>
             <form onSubmit={handleCreateInvoice} className="p-6 space-y-4">
@@ -428,8 +429,8 @@ export const Finance: React.FC = () => {
       {showReceiptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-slate-200 dark:border-charcoal-800 shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-charcoal-800 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Record Customer Payment Receipt</h3>
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900">Record Customer Payment Receipt</h3>
               <button onClick={() => setShowReceiptModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
             </div>
             <form onSubmit={handleRecordReceipt} className="p-6 space-y-4">

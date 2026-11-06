@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Building2, Users, Shield, Plus, CheckCircle, AlertCircle, RefreshCw, Download, Trash2, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { Modal } from '../components/ui/Modal';
 
 interface CompanyProfile {
   id: string;
@@ -38,6 +40,7 @@ interface Member {
 }
 
 export const CompanySettings: React.FC = () => {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +61,21 @@ export const CompanySettings: React.FC = () => {
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [confirmSlugInput, setConfirmSlugInput] = useState('');
   const [closing, setClosing] = useState(false);
+  const [memberToDeactivate, setMemberToDeactivate] = useState<Member | null>(null);
+  const [deactivatingMember, setDeactivatingMember] = useState(false);
+
+  const handleConfirmDeactivate = async () => {
+    if (!memberToDeactivate) return;
+    try {
+      setDeactivatingMember(true);
+      await handleToggleMemberStatus(memberToDeactivate.id, true);
+      setMemberToDeactivate(null);
+    } catch (err) {
+      console.error('Failed to deactivate member:', err);
+    } finally {
+      setDeactivatingMember(false);
+    }
+  };
 
   const fetchProfileAndMembers = async () => {
     try {
@@ -263,8 +281,8 @@ export const CompanySettings: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Organization Settings</h1>
-          <p className="text-sm text-slate-500 dark:text-charcoal-300">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Organization Settings</h1>
+          <p className="text-sm text-slate-500">
             Manage your company profile, enterprise team members, and role assignments.
           </p>
         </div>
@@ -311,12 +329,12 @@ export const CompanySettings: React.FC = () => {
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-white">Company Identity</h2>
+                <h2 className="text-base font-semibold text-slate-900">Company Identity</h2>
                 <span className="text-xs font-mono text-slate-400">slug: {profile?.slug}</span>
               </div>
             </div>
 
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
               {profile?.status}
             </span>
           </div>
@@ -327,7 +345,7 @@ export const CompanySettings: React.FC = () => {
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
               <button
@@ -343,16 +361,16 @@ export const CompanySettings: React.FC = () => {
                   setIsEditingName(false);
                   setCompanyName(profile?.name || '');
                 }}
-                className="px-3 py-2 text-slate-600 dark:text-charcoal-300 text-xs font-medium hover:bg-slate-100 dark:hover:bg-charcoal-800 rounded-lg"
+                className="px-3 py-2 text-slate-600 text-xs font-medium hover:bg-slate-100 rounded-lg"
               >
                 Cancel
               </button>
             </form>
           ) : (
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-charcoal-800">
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
               <div>
-                <p className="text-xs text-slate-500 dark:text-charcoal-400">Legal Company Name</p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">{profile?.name}</p>
+                <p className="text-xs text-slate-500">Legal Company Name</p>
+                <p className="text-lg font-semibold text-slate-900">{profile?.name}</p>
               </div>
               <button
                 onClick={() => setIsEditingName(true)}
@@ -370,17 +388,17 @@ export const CompanySettings: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-indigo-500" />
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Active Subscription</h3>
+                <h3 className="text-sm font-semibold text-slate-900">Active Subscription</h3>
               </div>
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
                 {profile?.planEntitlement?.name}
               </span>
             </div>
 
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-1">
+              <div className="flex justify-between text-xs text-slate-500 mb-1">
                 <span>Active Seats</span>
-                <span className="font-semibold text-slate-900 dark:text-white">
+                <span className="font-semibold text-slate-900">
                   {currentMembersCount} / {maxUsers >= 999999 ? 'Unlimited' : maxUsers}
                 </span>
               </div>
@@ -412,20 +430,20 @@ export const CompanySettings: React.FC = () => {
       </div>
 
       {/* Team Members Roster */}
-      <div className="bg-white dark:bg-charcoal-900 rounded-xl border border-slate-200 dark:border-charcoal-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-charcoal-800 flex justify-between items-center">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Team Directory</h2>
+            <h2 className="text-base font-semibold text-slate-900">Team Directory</h2>
           </div>
-          <span className="text-xs text-slate-500 dark:text-charcoal-400">
+          <span className="text-xs text-slate-500">
             {members.length} registered member{members.length === 1 ? '' : 's'}
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600 dark:text-charcoal-300">
-            <thead className="bg-slate-50 dark:bg-charcoal-800/60 text-xs font-semibold text-slate-500 dark:text-charcoal-400 uppercase tracking-wider">
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-3">Member</th>
                 <th className="px-6 py-3">Assigned Role</th>
@@ -434,48 +452,64 @@ export const CompanySettings: React.FC = () => {
                 <th className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-charcoal-800">
-              {members.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-charcoal-800/40 transition">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900 dark:text-white">
-                      {m.first_name} {m.last_name}
-                    </div>
-                    <div className="text-xs text-slate-400">{m.email}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-slate-100 text-slate-700 dark:bg-charcoal-800 dark:text-charcoal-300 border border-slate-200 dark:border-charcoal-700">
-                      {m.role?.name || `Role #${m.role_id}`}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-xs">
-                    {(m as any).employee?.designation || m.department?.name || 'Standard Personnel'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        m.is_active
-                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400'
-                          : 'bg-slate-100 text-slate-500 dark:bg-charcoal-800 dark:text-charcoal-400'
-                      }`}
-                    >
-                      {m.is_active ? 'Active' : 'Disabled'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => handleToggleMemberStatus(m.id, m.is_active)}
-                      className={`text-xs font-medium transition ${
-                        m.is_active
-                          ? 'text-rose-600 hover:text-rose-700 dark:text-rose-400'
-                          : 'text-indigo-600 hover:text-indigo-700 dark:text-indigo-400'
-                      }`}
-                    >
-                      {m.is_active ? 'Deactivate' : 'Reactivate'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-slate-100">
+              {members.map((m) => {
+                const isCurrentUser = Boolean(
+                  (user?.id && String(m.id) === String(user.id)) ||
+                  (user?.email && m.email.toLowerCase() === user.email.toLowerCase())
+                );
+                return (
+                  <tr key={m.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-slate-900">
+                        {m.first_name} {m.last_name}
+                      </div>
+                      <div className="text-xs text-slate-400">{m.email}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-800 border border-slate-300">
+                        {m.role?.name || `Role #${m.role_id}`}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-xs font-medium text-slate-700">
+                      {(m as any).employee?.designation || m.department?.name || 'Standard Personnel'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          m.is_active
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {m.is_active ? 'Active' : 'Disabled'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {isCurrentUser ? (
+                        <span className="text-xs text-slate-400 font-medium italic">Current Account</span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (m.is_active) {
+                              setMemberToDeactivate(m);
+                            } else {
+                              handleToggleMemberStatus(m.id, false);
+                            }
+                          }}
+                          className={`text-xs font-semibold transition ${
+                            m.is_active
+                              ? 'text-rose-600 hover:text-rose-700'
+                              : 'text-indigo-600 hover:text-indigo-700'
+                          }`}
+                        >
+                          {m.is_active ? 'Deactivate' : 'Reactivate'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -484,20 +518,20 @@ export const CompanySettings: React.FC = () => {
       {/* Data Portability & Danger Zone */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Data Portability */}
-        <div className="bg-white dark:bg-charcoal-900 rounded-xl border border-slate-200 dark:border-charcoal-800 p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Download className="w-5 h-5 text-indigo-500" />
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Data Portability & Export</h3>
+              <h3 className="text-base font-semibold text-slate-900">Data Portability & Export</h3>
             </div>
-            <p className="text-xs text-slate-500 dark:text-charcoal-400 mb-4">
+            <p className="text-xs text-slate-500 mb-4">
               Download a complete JSON snapshot of your organization's ERP records, team members, inventory, procurement requests, and subscriptions for archival or compliance.
             </p>
           </div>
           <button
             onClick={handleExportData}
             disabled={exporting}
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-charcoal-800 dark:hover:bg-charcoal-700 dark:text-white rounded-lg text-xs font-semibold transition"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition"
           >
             <Download className="w-4 h-4" />
             {exporting ? 'Generating JSON Snapshot...' : 'Export All Organization Data'}
@@ -505,19 +539,19 @@ export const CompanySettings: React.FC = () => {
         </div>
 
         {/* Danger Zone: Account Closure */}
-        <div className="bg-white dark:bg-charcoal-900 rounded-xl border border-rose-200 dark:border-rose-950/60 p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-xl border border-rose-200 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <AlertTriangle className="w-5 h-5 text-rose-500" />
-              <h3 className="text-base font-semibold text-rose-600 dark:text-rose-400">Organization Danger Zone</h3>
+              <h3 className="text-base font-semibold text-rose-600">Organization Danger Zone</h3>
             </div>
-            <p className="text-xs text-slate-500 dark:text-charcoal-400 mb-4">
+            <p className="text-xs text-slate-500 mb-4">
               Closing your account will suspend all company tenant workspaces, cancel ongoing subscriptions, and revoke member authentication immediately.
             </p>
           </div>
           <button
             onClick={() => setCloseModalOpen(true)}
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:border-rose-900 dark:text-rose-400 rounded-lg text-xs font-semibold transition"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold transition"
           >
             <Trash2 className="w-4 h-4" />
             Close & Suspend Organization
@@ -692,6 +726,18 @@ export const CompanySettings: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Deactivate Member Confirmation Modal */}
+      <Modal
+        isOpen={Boolean(memberToDeactivate)}
+        onClose={() => setMemberToDeactivate(null)}
+        title="Confirm Member Deactivation"
+        description={`Are you sure you want to deactivate ${memberToDeactivate?.first_name} ${memberToDeactivate?.last_name} (${memberToDeactivate?.email})? They will immediately lose access to the ENTRIX ERP organization.`}
+        confirmLabel={deactivatingMember ? 'Deactivating...' : 'Deactivate Member'}
+        cancelLabel="Cancel"
+        isDestructive={true}
+        confirmDisabled={deactivatingMember}
+        onConfirm={handleConfirmDeactivate}
+      />
     </div>
   );
 };

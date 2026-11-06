@@ -254,7 +254,8 @@ AuditLog.init({
   entity_id: { type: DataTypes.UUID, allowNull: false },
   diff_payload: { type: DataTypes.JSONB, defaultValue: {} },
   previous_hash: { type: DataTypes.STRING(64), allowNull: false },
-  current_hash: { type: DataTypes.STRING(64), allowNull: false }
+  current_hash: { type: DataTypes.STRING(64), allowNull: false },
+  timestamp: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { sequelize, tableName: 'audit_logs', timestamps: false });
 
 // 11. RefreshToken Model

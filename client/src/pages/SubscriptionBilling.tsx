@@ -9,6 +9,14 @@ import {
   Sparkles
 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
+import { formatDateTime } from '../lib/format';
+
+const PLAN_TIER_RANK: Record<string, number> = {
+  FREE: 0,
+  STARTER: 1,
+  GROWTH: 2,
+  ENTERPRISE: 3,
+};
 
 interface Plan {
   tier: string;
@@ -94,7 +102,7 @@ export const SubscriptionBilling: React.FC = () => {
                   <span class="status">${inv.status}</span>
                 </div>
               </div>
-              <div class="meta">Billing Period: ${new Date(inv.period_start).toLocaleDateString()} to ${new Date(inv.period_end).toLocaleDateString()}</div>
+              <div class="meta">Billing Period: ${formatDateTime(inv.period_start)} to ${formatDateTime(inv.period_end)}</div>
               <div class="amount">₹${Number(inv.amount_paid).toLocaleString()} ${inv.currency}</div>
               <p style="font-size: 12px; color: #64748b;">This is a system-generated electronic receipt for ENTRIX Enterprise SaaS.</p>
               <script>window.onload = function() { window.print(); };</script>
@@ -281,29 +289,29 @@ export const SubscriptionBilling: React.FC = () => {
       )}
 
       {/* Active Subscription Banner */}
-      <div className="bg-white dark:bg-charcoal-900 rounded-xl border border-slate-200 dark:border-charcoal-800 p-6 shadow-sm">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <span className="text-xl font-bold text-slate-900 dark:text-white">
+              <span className="text-xl font-bold text-slate-900">
                 {currentPlan?.name || 'ENTRIX ERP Plan'}
               </span>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
                   sub?.status === 'ACTIVE'
-                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                     : sub?.status === 'TRIALING'
-                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
-                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-300 dark:border-rose-700'
+                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                    : 'bg-rose-100 text-rose-800 border border-rose-300'
                 }`}
               >
                 {sub?.status || 'ACTIVE'}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-charcoal-400">
+            <p className="text-xs text-slate-500">
               {sub?.cancel_at_period_end
-                ? `Expires on ${new Date(sub.current_period_end).toLocaleDateString()} (Auto-renew disabled)`
-                : `Next billing date: ${new Date(sub?.current_period_end || Date.now()).toLocaleDateString()}`}
+                ? `Expires on ${formatDateTime(sub.current_period_end)} (Auto-renew disabled)`
+                : `Next billing date: ${formatDateTime(sub?.current_period_end || Date.now())}`}
             </p>
           </div>
 
@@ -395,8 +403,8 @@ export const SubscriptionBilling: React.FC = () => {
       {/* Plan Matrix */}
       <div>
         <div className="mb-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Available Subscription Tiers</h2>
-          <p className="text-xs text-slate-500 dark:text-charcoal-400">
+          <h2 className="text-lg font-bold text-slate-900">Available Subscription Tiers</h2>
+          <p className="text-xs text-slate-500">
             Select a plan to immediately switch with deterministic sandbox zero-cost billing.
           </p>
         </div>
@@ -404,35 +412,46 @@ export const SubscriptionBilling: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((p) => {
             const isCurrent = sub?.plan_tier.toUpperCase() === p.tier.toUpperCase();
+            const currentRank = PLAN_TIER_RANK[sub?.plan_tier.toUpperCase() || 'FREE'] ?? 0;
+            const targetRank = PLAN_TIER_RANK[p.tier.toUpperCase()] ?? 0;
+            const isUpgrade = targetRank > currentRank;
+            const buttonLabel = isCurrent
+              ? 'Current Plan'
+              : actionLoading
+              ? 'Processing...'
+              : isUpgrade
+              ? `Upgrade to ${p.name}`
+              : `Downgrade to ${p.name}`;
+
             return (
               <div
                 key={p.tier}
-                className={`rounded-xl border p-6 flex flex-col justify-between transition-all bg-white dark:bg-charcoal-900 ${
+                className={`rounded-xl border p-6 flex flex-col justify-between transition-all bg-white ${
                   isCurrent
-                    ? 'border-indigo-600 dark:border-indigo-500 ring-2 ring-indigo-500/20 shadow-md'
-                    : 'border-slate-200 dark:border-charcoal-800 hover:border-slate-300 dark:hover:border-charcoal-700'
+                    ? 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-md'
+                    : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
                 <div>
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-base text-slate-900 dark:text-white">{p.name}</h3>
+                    <h3 className="font-bold text-base text-slate-900">{p.name}</h3>
                     {isCurrent && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
                         Current
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-500 dark:text-charcoal-400 mb-4 h-10">{p.tagline}</p>
+                  <p className="text-xs text-slate-500 mb-4 h-10">{p.tagline}</p>
 
                   <div className="mb-6">
-                    <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                    <span className="text-2xl font-extrabold text-slate-900">
                       ₹{p.priceMonthlyINR.toLocaleString()}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-charcoal-400"> / month</span>
+                    <span className="text-xs text-slate-500"> / month</span>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-600 dark:text-charcoal-300 mb-6">
+                  <ul className="space-y-2.5 text-xs text-slate-600 mb-6">
                     {p.features.map((feat, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Check className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
@@ -447,11 +466,11 @@ export const SubscriptionBilling: React.FC = () => {
                   disabled={isCurrent || actionLoading}
                   className={`w-full py-2.5 px-4 rounded-lg text-xs font-semibold transition ${
                     isCurrent
-                      ? 'bg-slate-100 text-slate-400 dark:bg-charcoal-800 dark:text-charcoal-500 cursor-not-allowed'
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-500/20'
                   }`}
                 >
-                  {isCurrent ? 'Current Plan' : actionLoading ? 'Processing...' : `Upgrade to ${p.name}`}
+                  {buttonLabel}
                 </button>
               </div>
             );
@@ -460,20 +479,20 @@ export const SubscriptionBilling: React.FC = () => {
       </div>
 
       {/* Subscription Invoices Table */}
-      <div className="bg-white dark:bg-charcoal-900 rounded-xl border border-slate-200 dark:border-charcoal-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 dark:border-charcoal-800 flex justify-between items-center">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Billing History & Invoices</h2>
+            <h2 className="text-base font-semibold text-slate-900">Billing History & Invoices</h2>
           </div>
-          <span className="text-xs text-slate-500 dark:text-charcoal-400">
+          <span className="text-xs text-slate-500">
             {invoices.length} billing cycle{invoices.length === 1 ? '' : 's'}
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600 dark:text-charcoal-300">
-            <thead className="bg-slate-50 dark:bg-charcoal-800/60 text-xs font-semibold text-slate-500 dark:text-charcoal-400 uppercase tracking-wider">
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-3">Invoice Number</th>
                 <th className="px-6 py-3">Billing Period</th>
@@ -482,7 +501,7 @@ export const SubscriptionBilling: React.FC = () => {
                 <th className="px-6 py-3 text-right">Receipt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-charcoal-800">
+            <tbody className="divide-y divide-slate-100">
               {invoices.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-xs text-slate-400">
@@ -491,19 +510,19 @@ export const SubscriptionBilling: React.FC = () => {
                 </tr>
               ) : (
                 invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-charcoal-800/40 transition">
-                    <td className="px-6 py-4 font-mono text-xs font-medium text-slate-900 dark:text-white">
+                  <tr key={inv.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-6 py-4 font-mono text-xs font-medium text-slate-900">
                       {inv.invoice_number}
                     </td>
                     <td className="px-6 py-4 text-xs">
-                      {new Date(inv.period_start).toLocaleDateString()} &ndash;{' '}
-                      {new Date(inv.period_end).toLocaleDateString()}
+                      {formatDateTime(inv.period_start)} &ndash;{' '}
+                      {formatDateTime(inv.period_end)}
                     </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-900 dark:text-white">
+                    <td className="px-6 py-4 text-xs font-semibold text-slate-900">
                       ₹{Number(inv.amount_paid).toLocaleString()} {inv.currency}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {inv.status}
                       </span>
                     </td>
@@ -511,7 +530,7 @@ export const SubscriptionBilling: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleDownloadInvoice(inv)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700"
                       >
                         <Download className="w-3.5 h-3.5" /> View Receipt
                       </button>

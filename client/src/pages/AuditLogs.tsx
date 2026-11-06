@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { formatDateTime } from '../lib/format';
 
 interface AuditLogEntry {
   id: number;
@@ -137,8 +138,8 @@ export const AuditLogs: React.FC = () => {
                     <td className="py-3 px-4 text-slate-400 truncate max-w-xs" title={log.previous_hash}>
                       {log.previous_hash.substring(0, 16)}...{log.previous_hash.substring(48)}
                     </td>
-                    <td className="py-3 px-4 text-right text-slate-400 font-sans text-[11px]">
-                      {new Date(log.timestamp).toLocaleString()}
+                    <td className="py-3 px-4 text-right text-slate-500 font-sans text-[11px]">
+                      {formatDateTime(log.timestamp)}
                     </td>
                   </tr>
                 ))

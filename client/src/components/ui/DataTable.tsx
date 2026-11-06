@@ -1,13 +1,13 @@
 import React from 'react';
 import { Skeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
-import { FileQuestion, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileQuestion, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface Column<T> {
   key: string;
   header: string;
   render?: (row: T) => React.ReactNode;
-  align?: 'left' | 'right';
+  align?: 'left' | 'right' | 'center';
   numeric?: boolean;
   hideBelow?: 'md' | 'lg';
   width?: string;
@@ -18,6 +18,7 @@ export interface PaginationConfig {
   pageSize: number;
   total: number;
   onPageChange: (newPage: number) => void;
+  showJumps?: boolean;
 }
 
 export interface DataTableProps<T> {
@@ -27,7 +28,9 @@ export interface DataTableProps<T> {
   loading?: boolean;
   emptyState?: React.ReactNode;
   onRowClick?: (row: T) => void;
+  rowClassName?: (row: T, index: number) => string;
   pagination?: PaginationConfig;
+  footer?: React.ReactNode;
   className?: string;
 }
 
@@ -38,7 +41,9 @@ export function DataTable<T>({
   loading = false,
   emptyState,
   onRowClick,
+  rowClassName,
   pagination,
+  footer,
   className = '',
 }: DataTableProps<T>): React.ReactElement {
   const getResponsiveClass = (col: Column<T>) => {
@@ -57,13 +62,14 @@ export function DataTable<T>({
             <tr>
               {columns.map((col) => {
                 const isNumeric = col.numeric || col.align === 'right';
+                const isCenter = col.align === 'center';
                 return (
                   <th
                     key={col.key}
                     scope="col"
                     style={{ width: col.width }}
                     className={`h-11 px-4 text-[11px] font-semibold text-muted uppercase tracking-wide font-sans select-none ${
-                      isNumeric ? 'text-right' : 'text-left'
+                      isNumeric ? 'text-right' : isCenter ? 'text-center' : 'text-left'
                     } ${getResponsiveClass(col)}`}
                   >
                     {col.header}
@@ -90,23 +96,24 @@ export function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
+              rows.map((row, idx) => (
                 <tr
                   key={rowKey(row)}
                   onClick={() => onRowClick && onRowClick(row)}
                   className={`h-11 min-h-[44px] transition-colors ${
-                    onRowClick ? 'cursor-pointer hover:bg-surface-2/70' : 'hover:bg-surface-2/40'
-                  }`}
+                    rowClassName ? rowClassName(row, idx) : ''
+                  } ${onRowClick ? 'cursor-pointer hover:bg-surface-2/70' : 'hover:bg-surface-2/40'}`}
                 >
                   {columns.map((col) => {
                     const isNumeric = col.numeric || col.align === 'right';
+                    const isCenter = col.align === 'center';
                     const cellContent = col.render ? col.render(row) : (row as Record<string, any>)[col.key];
 
                     return (
                       <td
                         key={col.key}
                         className={`h-11 px-4 text-xs ${
-                          isNumeric ? 'text-right font-mono tabular-nums' : 'text-left font-sans'
+                          isNumeric ? 'text-right font-mono tabular-nums' : isCenter ? 'text-center' : 'text-left font-sans'
                         } ${getResponsiveClass(col)}`}
                       >
                         {cellContent}
@@ -117,29 +124,51 @@ export function DataTable<T>({
               ))
             )}
           </tbody>
+          {footer && (
+            <tfoot className="border-t-2 border-border bg-surface-2/60 font-medium">
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-3">
+                  {footer}
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
       {pagination && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-surface text-xs text-muted">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-border bg-surface text-xs text-muted">
           <div>
             Showing{' '}
-            <span className="font-semibold text-text">
+            <span className="font-semibold text-text font-mono">
               {pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.pageSize + 1}
-            </span>{' '}
-            to{' '}
-            <span className="font-semibold text-text">
+            </span>
+            -
+            <span className="font-semibold text-text font-mono">
               {Math.min(pagination.page * pagination.pageSize, pagination.total)}
             </span>{' '}
-            of <span className="font-semibold text-text">{pagination.total}</span> entries
+            of <span className="font-semibold text-text font-mono">{pagination.total}</span>
           </div>
           <div className="flex items-center gap-1.5">
+            {pagination.showJumps && (
+              <button
+                type="button"
+                disabled={pagination.page <= 1}
+                onClick={() => pagination.onPageChange(1)}
+                className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+                aria-label="First Page"
+                title="First Page"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+            )}
             <button
               type="button"
               disabled={pagination.page <= 1}
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
               aria-label="Previous Page"
+              title="Previous Page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -152,9 +181,22 @@ export function DataTable<T>({
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
               aria-label="Next Page"
+              title="Next Page"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
+            {pagination.showJumps && (
+              <button
+                type="button"
+                disabled={pagination.page >= totalPages}
+                onClick={() => pagination.onPageChange(totalPages)}
+                className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+                aria-label="Last Page"
+                title="Last Page"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,18 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   CreditCard,
   Check,
   HardDrive,
   Users,
   Download,
-  RefreshCw,
-  Sparkles
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
-import { formatDateTime } from '../lib/format';
+import { formatDateTime, formatCurrency } from '../lib/format';
 import { PageHeader } from '../components/ui/PageHeader';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { IconButton } from '../components/ui/IconButton';
+import { StatusPill } from '../components/ui/StatusPill';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Button } from '../components/ui/Button';
+import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { useTestDataToggle } from '../hooks/useTestDataToggle';
+import { isTestRecord } from '../lib/testData';
 
 const PLAN_TIER_RANK: Record<string, number> = {
   FREE: 0,
@@ -77,6 +84,36 @@ export const SubscriptionBilling: React.FC = () => {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [confirmCancelAutoRenew, setConfirmCancelAutoRenew] = useState(false);
   const [pendingPlanSwitch, setPendingPlanSwitch] = useState<string | null>(null);
+
+  const { showTestData, toggle: toggleTestData } = useTestDataToggle();
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [invoicePage, setInvoicePage] = useState(1);
+  const pageSize = 12;
+
+  const hiddenInvoiceTestCount = useMemo(() => {
+    return invoices.filter(inv => isTestRecord(inv.invoice_number)).length;
+  }, [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) => {
+      if (!showTestData && isTestRecord(inv.invoice_number)) {
+        return false;
+      }
+      if (statusFilter !== 'All' && inv.status.toUpperCase() !== statusFilter.toUpperCase()) {
+        return false;
+      }
+      return true;
+    });
+  }, [invoices, showTestData, statusFilter]);
+
+  const paginatedInvoices = useMemo(() => {
+    const start = (invoicePage - 1) * pageSize;
+    return filteredInvoices.slice(start, start + pageSize);
+  }, [filteredInvoices, invoicePage, pageSize]);
+
+  useEffect(() => {
+    setInvoicePage(1);
+  }, [statusFilter, showTestData]);
 
   const handleDownloadInvoice = (inv: Invoice) => {
     if (inv.hosted_invoice_url && !inv.hosted_invoice_url.includes('.local')) {
@@ -484,68 +521,113 @@ export const SubscriptionBilling: React.FC = () => {
       </div>
 
       {/* Subscription Invoices Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900">Billing History & Invoices</h2>
+      <div className="space-y-4">
+        {/* Status Filter & Test Data Toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-medium text-slate-500">Invoice Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="All">All Invoices</option>
+              <option value="PAID">Paid</option>
+              <option value="PENDING">Pending</option>
+              <option value="FAILED">Failed</option>
+            </select>
           </div>
-          <span className="text-xs text-slate-500">
-            {invoices.length} billing cycle{invoices.length === 1 ? '' : 's'}
-          </span>
+
+          <TestDataToggle
+            showTestData={showTestData}
+            onToggle={toggleTestData}
+            hiddenCount={hiddenInvoiceTestCount}
+          />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-3">Invoice Number</th>
-                <th className="px-6 py-3">Billing Period</th>
-                <th className="px-6 py-3">Amount</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Receipt</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-xs text-slate-400">
-                    No billing invoices generated yet.
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4 font-mono text-xs font-medium text-slate-900">
-                      {inv.invoice_number}
-                    </td>
-                    <td className="px-6 py-4 text-xs">
-                      {formatDateTime(inv.period_start)} &ndash;{' '}
-                      {formatDateTime(inv.period_end)}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-900">
-                      ₹{Number(inv.amount_paid).toLocaleString()} {inv.currency}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <IconButton
-                        icon={Download}
-                        tooltip="View & download electronic receipt"
-                        aria-label={`View receipt for invoice ${inv.invoice_number}`}
-                        variant="ghost"
-                        onClick={() => handleDownloadInvoice(inv)}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<Invoice>
+          columns={[
+            {
+              key: 'invoice_number',
+              header: 'Invoice Number',
+              render: (inv) => (
+                <span className="font-mono text-xs font-semibold text-indigo-600">
+                  {inv.invoice_number}
+                </span>
+              )
+            },
+            {
+              key: 'period',
+              header: 'Billing Period',
+              render: (inv) => (
+                <span className="text-xs text-slate-600">
+                  {formatDateTime(inv.period_start)} &ndash; {formatDateTime(inv.period_end)}
+                </span>
+              )
+            },
+            {
+              key: 'amount',
+              header: 'Amount',
+              align: 'right',
+              render: (inv) => (
+                <span className="font-mono font-bold text-slate-900 tabular-nums">
+                  {formatCurrency(Number(inv.amount_paid))}
+                </span>
+              )
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (inv) => {
+                const variant =
+                  inv.status.toUpperCase() === 'PAID' ? 'success' :
+                  inv.status.toUpperCase() === 'PENDING' ? 'warning' : 'danger';
+                return <StatusPill variant={variant}>{inv.status}</StatusPill>;
+              }
+            },
+            {
+              key: 'receipt',
+              header: 'Receipt',
+              align: 'right',
+              render: (inv) => (
+                <IconButton
+                  icon={Download}
+                  tooltip="View & download electronic receipt"
+                  aria-label={`View receipt for invoice ${inv.invoice_number}`}
+                  variant="ghost"
+                  onClick={() => handleDownloadInvoice(inv)}
+                />
+              )
+            }
+          ]}
+          rows={paginatedInvoices}
+          rowKey={(inv) => inv.id}
+          loading={loading}
+          pagination={{
+            page: invoicePage,
+            pageSize,
+            total: filteredInvoices.length,
+            onPageChange: setInvoicePage
+          }}
+          emptyState={
+            <EmptyState
+              icon={CreditCard}
+              title="No billing invoices found"
+              description={
+                statusFilter !== 'All' || !showTestData
+                  ? "No billing records match the selected status filter."
+                  : "Invoices will be recorded when subscription cycles renew."
+              }
+              action={
+                statusFilter !== 'All' ? (
+                  <Button variant="outline" size="sm" onClick={() => setStatusFilter('All')}>
+                    Show all invoices
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+        />
       </div>
 
       {/* Confirm Cancel Auto-Renew Modal */}

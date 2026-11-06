@@ -1,12 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
-import { RefreshCw, Plus, CheckCircle, X, Loader2, PlayCircle } from 'lucide-react';
+import { StatusPill } from '../components/ui/StatusPill';
+import { EmptyState } from '../components/ui/EmptyState';
+import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { useTestDataToggle } from '../hooks/useTestDataToggle';
+import { isTestRecord } from '../lib/testData';
+import { formatCurrency, formatNumber } from '../lib/format';
+import { RefreshCw, Plus, CheckCircle, X, Loader2, PlayCircle, FolderKanban } from 'lucide-react';
 
 export const Projects: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'PLANNING' | 'IN_PROGRESS' | 'DONE'>('ALL');
+  const [sortBy, setSortBy] = useState<'progress-desc' | 'budget-desc' | 'name-asc'>('progress-desc');
+  const { showTestData, toggle: toggleTestData } = useTestDataToggle();
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -106,6 +115,48 @@ export const Projects: React.FC = () => {
     setShowProgressModal(true);
   };
 
+  const hiddenProjectTestCount = useMemo(() => {
+    return projects.filter(p => isTestRecord(p.code) || isTestRecord(p.name)).length;
+  }, [projects]);
+
+  const projectCounts = useMemo(() => {
+    const visibleProjects = projects.filter(p => showTestData || (!isTestRecord(p.code) && !isTestRecord(p.name)));
+    return {
+      ALL: visibleProjects.length,
+      PLANNING: visibleProjects.filter(p => p.status === 'PLANNING').length,
+      IN_PROGRESS: visibleProjects.filter(p => p.status === 'IN_PROGRESS' || p.status === 'ACTIVE').length,
+      DONE: visibleProjects.filter(p => p.status === 'COMPLETED' || p.status === 'DONE').length
+    };
+  }, [projects, showTestData]);
+
+  const filteredAndSortedProjects = useMemo(() => {
+    return projects
+      .filter((p) => {
+        if (!showTestData && (isTestRecord(p.code) || isTestRecord(p.name))) {
+          return false;
+        }
+        if (activeTab === 'ALL') return true;
+        if (activeTab === 'PLANNING') return p.status === 'PLANNING';
+        if (activeTab === 'IN_PROGRESS') return p.status === 'IN_PROGRESS' || p.status === 'ACTIVE';
+        if (activeTab === 'DONE') return p.status === 'COMPLETED' || p.status === 'DONE';
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'name-asc') {
+          return (a.name || '').localeCompare(b.name || '');
+        }
+        if (sortBy === 'budget-desc') {
+          return Number(b.allocated_budget || 0) - Number(a.allocated_budget || 0);
+        }
+        if (sortBy === 'progress-desc') {
+          const progA = a.milestones_total > 0 ? (a.milestones_completed / a.milestones_total) : 0;
+          const progB = b.milestones_total > 0 ? (b.milestones_completed / b.milestones_total) : 0;
+          return progB - progA;
+        }
+        return 0;
+      });
+  }, [projects, showTestData, activeTab, sortBy]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -138,22 +189,122 @@ export const Projects: React.FC = () => {
         </div>
       )}
 
+      {/* Filter Tabs, Sort, and Test Data Toggle */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          {(['ALL', 'PLANNING', 'IN_PROGRESS', 'DONE'] as const).map((tab) => {
+            const labelMap = {
+              ALL: 'All',
+              PLANNING: 'Planning',
+              IN_PROGRESS: 'In Progress',
+              DONE: 'Done'
+            };
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 min-h-[36px] text-xs font-semibold rounded-lg border transition-colors shrink-0 flex items-center gap-1.5 ${
+                  activeTab === tab
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <span>{labelMap[tab]}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  activeTab === tab ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {projectCounts[tab]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap justify-between sm:justify-end">
+          <TestDataToggle
+            showTestData={showTestData}
+            onToggle={toggleTestData}
+            hiddenCount={hiddenProjectTestCount}
+          />
+
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <span>Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="progress-desc">Progress: High to Low</option>
+              <option value="budget-desc">Budget: High to Low</option>
+              <option value="name-asc">Name A-Z</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <div className="p-8 text-center text-xs text-slate-400 bg-white rounded-xl border border-slate-200">
           Loading project telemetry from backend...
         </div>
-      ) : projects.length === 0 ? (
-        <div className="p-8 text-center text-xs text-slate-400 bg-white rounded-xl border border-slate-200">
-          No active projects recorded. Click "New Project" to launch an initiative.
-        </div>
+      ) : filteredAndSortedProjects.length === 0 ? (
+        <EmptyState
+          icon={FolderKanban}
+          title="No projects found"
+          description={
+            activeTab !== 'ALL' || !showTestData
+              ? "No project initiatives match your selected criteria."
+              : "Launch an initiative to track milestones and resource burn."
+          }
+          action={
+            activeTab !== 'ALL' ? (
+              <Button variant="outline" size="sm" onClick={() => setActiveTab('ALL')}>
+                Show all projects
+              </Button>
+            ) : (
+              <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+                <Plus className="w-4 h-4 mr-1.5" /> New Project
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {projects.map((p) => {
+          {filteredAndSortedProjects.map((p) => {
             const progress = p.milestones_total > 0
               ? Math.min(100, Math.round((p.milestones_completed / p.milestones_total) * 100))
               : 0;
 
-            const isCompleted = p.status === 'COMPLETED' || progress >= 100;
+            const isCompleted = p.status === 'COMPLETED' || p.status === 'DONE' || progress >= 100;
+            const isPlanning = p.status === 'PLANNING' && progress === 0;
+
+            const budgetPct = Number(p.allocated_budget) > 0
+              ? Math.min(100, Math.round((Number(p.consumed_budget || 0) / Number(p.allocated_budget)) * 100))
+              : 0;
+
+            // Compact card variant for 0% progress PLANNING items
+            if (isPlanning) {
+              return (
+                <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                        {p.code}
+                      </span>
+                      <h3 className="text-xs font-bold text-slate-800 truncate">{p.name}</h3>
+                    </div>
+                    <StatusPill variant="neutral">{p.status}</StatusPill>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                    <span className="font-mono">Budget: {formatCurrency(Number(p.allocated_budget || 0))}</span>
+                    <Button variant="outline" size="sm" onClick={() => openProgressModal(p)}>
+                      <PlayCircle className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                      Advance
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
@@ -165,16 +316,12 @@ export const Projects: React.FC = () => {
                     <h3 className="text-sm font-bold text-slate-800 mt-1.5">{p.name}</h3>
                     <p className="text-xs text-slate-400 font-medium">{p.department_code || 'General'} Department</p>
                   </div>
-                  <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full border ${
-                    isCompleted
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-blue-50 text-blue-700 border-blue-200'
-                  }`}>
+                  <StatusPill variant={isCompleted ? 'success' : 'info'}>
                     {p.status}
-                  </span>
+                  </StatusPill>
                 </div>
 
-                {/* Progress Bar */}
+                {/* Milestone Progress Bar */}
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-500">Milestone Progress</span>
@@ -190,24 +337,36 @@ export const Projects: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
-                  <div>
-                    <span className="text-xs text-slate-400">Budget</span>
-                    <p className="font-mono font-bold text-slate-800">
-                      ₹{Number(p.consumed_budget || 0).toLocaleString()} / ₹{Number(p.allocated_budget || 0).toLocaleString()}
-                    </p>
+                {/* Thin Budget Progress Bar */}
+                <div>
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-slate-400">Budget Burndown ({budgetPct}%)</span>
+                    <span className="font-mono text-slate-600">
+                      {formatCurrency(Number(p.consumed_budget || 0))} / {formatCurrency(Number(p.allocated_budget || 0))}
+                    </span>
                   </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
+                    <div
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        budgetPct > 90 ? 'bg-rose-500' : budgetPct > 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${budgetPct}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
                   <div>
                     <span className="text-xs text-slate-400">Milestones</span>
                     <p className="font-mono font-bold text-slate-800">
                       {p.milestones_completed} / {p.milestones_total}
                     </p>
                   </div>
-                  <div>
+                  <div className="text-right">
                     <span className="text-xs text-slate-400">Dev Hours</span>
                     <p className="font-mono font-bold text-slate-800">
-                      {p.logged_hours} / {p.estimated_hours} hrs
+                      {formatNumber(Number(p.logged_hours || 0))} / {formatNumber(Number(p.estimated_hours || 0))} hrs
                     </p>
                   </div>
                 </div>

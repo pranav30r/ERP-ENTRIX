@@ -8,11 +8,14 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { PageHeader } from '../components/ui/PageHeader';
 import { StatusPill } from '../components/ui/StatusPill';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
 import { Tooltip as UITooltip } from '../components/ui/Tooltip';
+import { formatCurrency, formatNumber } from '../lib/format';
 
 export const AIInsights: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
@@ -109,27 +112,34 @@ export const AIInsights: React.FC = () => {
 
       {/* Forecast Chart Card */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
-            <h3 className="text-sm font-semibold text-slate-800">
-              {forecastData.length > 0 ? `${forecastData.length}-Day` : '14-Day'} Demand Curve Prediction (SKU: RAW-STL-001)
-            </h3>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-              <span>Forecast model</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                RAW-STL-001
+              </span>
+              <h3 className="text-sm font-semibold text-slate-800">
+                {forecastData.length > 0 ? `${forecastData.length}-Day` : '14-Day'} Demand Curve Prediction
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
+              <span>Model: {modelName}</span>
               <UITooltip content="RandomForestRegressor (50 Estimators, Lag 1/3/7 Features)">
                 <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Model hyperparameters" />
               </UITooltip>
             </div>
           </div>
-          <div className="text-right font-mono">
-            <span className="text-xs text-slate-400">Recommended Restock: </span>
-            <span className="text-sm font-bold text-indigo-600">{reorderQty} Units</span>
+          <div className="text-left sm:text-right font-mono">
+            <span className="text-xs text-slate-400 block sm:inline">Recommended Restock: </span>
+            <span className="text-sm font-bold text-indigo-600">
+              {formatNumber(reorderQty)} units
+            </span>
           </div>
         </div>
 
-        <div className="h-64 w-full">
+        <div className="h-[320px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={forecastData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={forecastData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorDemand" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#635bff" stopOpacity={0.2}/>
@@ -138,17 +148,25 @@ export const AIInsights: React.FC = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} tickLine={false} />
-              <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-              <Tooltip contentStyle={{ background: '#0f172a', borderRadius: '8px', color: '#fff', fontSize: '12px' }} />
+              <YAxis
+                stroke="#94a3b8"
+                fontSize={11}
+                tickLine={false}
+                tickFormatter={(val) => formatNumber(val)}
+              />
+              <Tooltip
+                contentStyle={{ background: '#0f172a', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                formatter={(val: any) => [formatNumber(Number(val)) + ' units', 'Projected Demand']}
+              />
               <Area type="monotone" dataKey="demand" stroke="#635bff" strokeWidth={2} fillOpacity={1} fill="url(#colorDemand)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Anomaly Detection Section */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+      {/* Anomaly Detection Section via DataTable */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-rose-500" />
             <h3 className="text-sm font-semibold text-slate-800">Expense Anomaly & Fraud Isolation</h3>
@@ -158,46 +176,74 @@ export const AIInsights: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-              <tr>
-                <th className="py-2.5 px-4 font-semibold">Transaction ID</th>
-                <th className="py-2.5 px-4 font-semibold">Vendor</th>
-                <th className="py-2.5 px-4 font-semibold">Department</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Amount</th>
-                <th className="py-2.5 px-4 font-semibold">Risk Classification Factors</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Audit Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {anomalies.map((a) => (
-                <tr key={a.transaction_id} className="bg-rose-50/20 hover:bg-rose-50/40 transition-colors">
-                  <td className="py-3 px-4 font-mono font-medium text-slate-900">{a.transaction_id}</td>
-                  <td className="py-3 px-4 font-medium text-slate-800">{a.vendor}</td>
-                  <td className="py-3 px-4 font-mono text-slate-500">{a.department}</td>
-                  <td className="py-3 px-4 text-right font-mono font-bold text-rose-600">
-                    ₹{Number(a.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {a.risk_factors.map((rf: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-xs font-medium">
-                          {rf}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <button className="px-2.5 py-1 bg-white border border-rose-300 text-rose-700 rounded text-xs font-semibold hover:bg-rose-50">
-                      Triage
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<any>
+          columns={[
+            {
+              key: 'transaction_id',
+              header: 'Transaction ID',
+              render: (a) => <span className="font-mono font-medium text-slate-900">{a.transaction_id}</span>
+            },
+            {
+              key: 'vendor',
+              header: 'Vendor',
+              render: (a) => <span className="font-medium text-slate-800">{a.vendor}</span>
+            },
+            {
+              key: 'department',
+              header: 'Department',
+              render: (a) => <span className="font-mono text-slate-500">{a.department}</span>
+            },
+            {
+              key: 'amount',
+              header: 'Amount',
+              align: 'right',
+              render: (a) => (
+                <span className="font-mono font-bold text-rose-600 tabular-nums">
+                  {formatCurrency(Number(a.amount))}
+                </span>
+              )
+            },
+            {
+              key: 'risk_factors',
+              header: 'Risk Classification Factors',
+              render: (a) => (
+                <div className="flex flex-wrap gap-1">
+                  {a.risk_factors.map((rf: string, i: number) => {
+                    const isHighRisk = rf.toLowerCase().includes('high-value') || rf.toLowerCase().includes('fraud') || rf.toLowerCase().includes('unknown');
+                    return (
+                      <StatusPill key={i} variant={isHighRisk ? 'danger' : 'warning'} size="sm">
+                        {rf}
+                      </StatusPill>
+                    );
+                  })}
+                </div>
+              )
+            },
+            {
+              key: 'actions',
+              header: 'Audit Action',
+              align: 'right',
+              render: () => (
+                <button
+                  type="button"
+                  className="px-2.5 py-1 bg-white border border-rose-300 text-rose-700 rounded text-xs font-semibold hover:bg-rose-50"
+                  onClick={() => alert('Anomaly flagged for secondary financial audit.')}
+                >
+                  Triage
+                </button>
+              )
+            }
+          ]}
+          rows={anomalies}
+          rowKey={(a) => a.transaction_id}
+          emptyState={
+            <EmptyState
+              icon={CheckCircle2}
+              title="No anomalies detected"
+              description="Machine learning audit scan completed. All disbursements fall within normal operational boundaries."
+            />
+          }
+        />
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft, Info, BookOpen } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Tooltip } from '../components/ui/Tooltip';
-import { formatDateTime } from '../lib/format';
+import { StatusPill } from '../components/ui/StatusPill';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
+import { formatDateTime, formatCurrency } from '../lib/format';
 
 export const Finance: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'RECEIVABLES'>('LEDGER');
@@ -24,6 +27,20 @@ export const Finance: React.FC = () => {
   const [receiptLoading, setReceiptLoading] = useState(false);
 
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const [ledgerPage, setLedgerPage] = useState(1);
+  const [arPage, setArPage] = useState(1);
+  const pageSize = 25;
+
+  const paginatedEntries = useMemo(() => {
+    const start = (ledgerPage - 1) * pageSize;
+    return entries.slice(start, start + pageSize);
+  }, [entries, ledgerPage, pageSize]);
+
+  const paginatedArTransactions = useMemo(() => {
+    const start = (arPage - 1) * pageSize;
+    return (arSummary.recent_transactions || []).slice(start, start + pageSize);
+  }, [arSummary.recent_transactions, arPage, pageSize]);
 
   const fetchLedger = async () => {
     setLoading(true);
@@ -213,54 +230,95 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* Ledger Table */}
-          <div className="bg-surface border border-border rounded-lg shadow-card overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-text">Double-Entry Journal Postings</h3>
-              <span className="text-xs text-muted">{entries.length} records</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-surface-2 border-b border-border text-muted font-mono text-[10px] uppercase">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Entry ID</th>
-                    <th className="py-3 px-4 font-semibold">General Ledger Account</th>
-                    <th className="py-3 px-4 font-semibold">Reference</th>
-                    <th className="py-3 px-4 font-semibold text-right">Debit (₹)</th>
-                    <th className="py-3 px-4 font-semibold text-right">Credit (₹)</th>
-                    <th className="py-3 px-4 font-semibold text-right">Posted At</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-slate-700">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">Loading ledger journal entries...</td>
-                    </tr>
-                  ) : entries.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">No ledger entries posted.</td>
-                    </tr>
+          <DataTable<any>
+            columns={[
+              {
+                key: 'id',
+                header: 'Entry ID',
+                render: (item) => <span className="font-mono font-bold text-slate-900">#{item.id}</span>
+              },
+              {
+                key: 'account_code',
+                header: 'General Ledger Account',
+                render: (item) => <span className="font-semibold text-slate-800">{item.account_code}</span>
+              },
+              {
+                key: 'reference_type',
+                header: 'Reference',
+                render: (item) => <span className="text-slate-500">{item.reference_type || 'N/A'}</span>
+              },
+              {
+                key: 'debit_amount',
+                header: 'Debit (₹)',
+                align: 'right',
+                render: (item) => (
+                  <span className="font-mono font-bold text-slate-900 tabular-nums">
+                    {Number(item.debit_amount) > 0 ? formatCurrency(Number(item.debit_amount)) : '—'}
+                  </span>
+                )
+              },
+              {
+                key: 'credit_amount',
+                header: 'Credit (₹)',
+                align: 'right',
+                render: (item) => (
+                  <span className="font-mono font-bold text-slate-900 tabular-nums">
+                    {Number(item.credit_amount) > 0 ? formatCurrency(Number(item.credit_amount)) : '—'}
+                  </span>
+                )
+              },
+              {
+                key: 'posted_at',
+                header: 'Posted At',
+                align: 'right',
+                render: (item) => (
+                  <span className="text-slate-500 font-sans text-xs">
+                    {formatDateTime(item.posted_at)}
+                  </span>
+                )
+              }
+            ]}
+            rows={paginatedEntries}
+            rowKey={(item) => item.id}
+            loading={loading}
+            rowClassName={(_row, index) => (index > 0 && index % 2 === 0 ? 'border-t-2 border-slate-300' : '')}
+            pagination={{
+              page: ledgerPage,
+              pageSize,
+              total: entries.length,
+              onPageChange: setLedgerPage,
+              showJumps: true
+            }}
+            footer={
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs w-full">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-slate-500">Ledger Status:</span>
+                  {summary.is_balanced ? (
+                    <StatusPill variant="success">Balanced</StatusPill>
                   ) : (
-                    entries.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50 font-mono text-xs">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">#{item.id}</td>
-                        <td className="py-3.5 px-4 font-sans font-semibold text-slate-800">{item.account_code}</td>
-                        <td className="py-3.5 px-4 text-slate-500 font-sans">{item.reference_type || 'N/A'}</td>
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                          {Number(item.debit_amount) > 0 ? `₹${Number(item.debit_amount).toFixed(2)}` : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-900">
-                          {Number(item.credit_amount) > 0 ? `₹${Number(item.credit_amount).toFixed(2)}` : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right text-slate-500 font-sans text-xs">
-                          {formatDateTime(item.posted_at)}
-                        </td>
-                      </tr>
-                    ))
+                    <StatusPill variant="danger">Out of balance</StatusPill>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </div>
+                <div className="flex items-center gap-6 font-mono">
+                  <div>
+                    <span className="text-slate-500 mr-2">Total Debits:</span>
+                    <span className="font-bold text-slate-900">{formatCurrency(summary.total_debits)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 mr-2">Total Credits:</span>
+                    <span className="font-bold text-slate-900">{formatCurrency(summary.total_credits)}</span>
+                  </div>
+                </div>
+              </div>
+            }
+            emptyState={
+              <EmptyState
+                icon={BookOpen}
+                title="No ledger entries posted"
+                description="Financial transactions and requisitions will automatically post double-entry records here."
+              />
+            }
+          />
         </>
       ) : (
         /* ACCOUNTS RECEIVABLE TAB */
@@ -317,56 +375,71 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* AR Ledger Postings Table */}
-          <div className="bg-surface border border-border rounded-lg shadow-card overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-text">Recent Accounts Receivable Ledger Records</h3>
-              <span className="text-xs text-muted font-mono">{arSummary.recent_transactions.length} Transactions</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-surface-2 border-b border-border text-muted font-mono text-[10px] uppercase">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Entry ID</th>
-                    <th className="py-3 px-4 font-semibold">Type</th>
-                    <th className="py-3 px-4 font-semibold text-right">Debit (Invoiced)</th>
-                    <th className="py-3 px-4 font-semibold text-right">Credit (Collected)</th>
-                    <th className="py-3 px-4 font-semibold text-right">Transaction Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {arSummary.recent_transactions.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-400">No customer receivables recorded yet.</td>
-                    </tr>
-                  ) : (
-                    arSummary.recent_transactions.map((tx: any) => (
-                      <tr key={tx.id} className="hover:bg-slate-50 font-mono text-xs">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">#{tx.id}</td>
-                        <td className="py-3.5 px-4 font-sans font-semibold">
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs ${
-                            tx.reference_type === 'CUSTOMER_INVOICE' 
-                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}>
-                            {tx.reference_type}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-bold text-indigo-600">
-                          {Number(tx.debit_amount) > 0 ? `₹${Number(tx.debit_amount).toFixed(2)}` : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-bold text-emerald-600">
-                          {Number(tx.credit_amount) > 0 ? `₹${Number(tx.credit_amount).toFixed(2)}` : '—'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right text-slate-500 font-sans text-xs">
-                          {formatDateTime(tx.posted_at)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable<any>
+            columns={[
+              {
+                key: 'id',
+                header: 'Entry ID',
+                render: (tx) => <span className="font-mono font-bold text-slate-900">#{tx.id}</span>
+              },
+              {
+                key: 'reference_type',
+                header: 'Type',
+                render: (tx) => (
+                  <StatusPill variant={tx.reference_type === 'CUSTOMER_INVOICE' ? 'info' : 'success'}>
+                    {tx.reference_type}
+                  </StatusPill>
+                )
+              },
+              {
+                key: 'debit_amount',
+                header: 'Debit (Invoiced)',
+                align: 'right',
+                render: (tx) => (
+                  <span className="font-mono font-bold text-indigo-600 tabular-nums">
+                    {Number(tx.debit_amount) > 0 ? formatCurrency(Number(tx.debit_amount)) : '—'}
+                  </span>
+                )
+              },
+              {
+                key: 'credit_amount',
+                header: 'Credit (Collected)',
+                align: 'right',
+                render: (tx) => (
+                  <span className="font-mono font-bold text-emerald-600 tabular-nums">
+                    {Number(tx.credit_amount) > 0 ? formatCurrency(Number(tx.credit_amount)) : '—'}
+                  </span>
+                )
+              },
+              {
+                key: 'posted_at',
+                header: 'Transaction Date',
+                align: 'right',
+                render: (tx) => (
+                  <span className="text-slate-500 font-sans text-xs">
+                    {formatDateTime(tx.posted_at)}
+                  </span>
+                )
+              }
+            ]}
+            rows={paginatedArTransactions}
+            rowKey={(tx) => tx.id}
+            loading={loading}
+            pagination={{
+              page: arPage,
+              pageSize,
+              total: arSummary.recent_transactions?.length || 0,
+              onPageChange: setArPage,
+              showJumps: true
+            }}
+            emptyState={
+              <EmptyState
+                icon={FileText}
+                title="No customer receivables recorded yet"
+                description="Issue customer invoices or log payment receipts to track AR cash flows."
+              />
+            }
+          />
         </>
       )}
 

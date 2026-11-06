@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, UserPlus, Calendar, Search, Edit2, X, Loader2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { RefreshCw, UserPlus, Calendar, Search, Edit2, X, Users, Copy, Check, CheckCircle2, Loader2 } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
+import { StatusPill } from '../components/ui/StatusPill';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Tooltip } from '../components/ui/Tooltip';
+import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { useTestDataToggle } from '../hooks/useTestDataToggle';
+import { isTestRecord } from '../lib/testData';
+import { formatCurrency, formatDate } from '../lib/format';
 
 export const HR: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'employees' | 'attendance'>('employees');
@@ -20,6 +28,61 @@ export const HR: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { showTestData, toggle: toggleTestData } = useTestDataToggle();
+  const [selectedDept, setSelectedDept] = useState<string>('All');
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+  const [empPage, setEmpPage] = useState(1);
+  const [attPage, setAttPage] = useState(1);
+  const pageSize = 25;
+
+  const handleCopyEmail = (email: string) => {
+    if (!email || email === '—') return;
+    navigator.clipboard.writeText(email);
+    setCopiedEmail(email);
+    setTimeout(() => setCopiedEmail(null), 2000);
+  };
+
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    employees.forEach((emp) => {
+      const dept = emp.department?.name || emp.designation;
+      if (dept) set.add(dept);
+    });
+    return ['All', ...Array.from(set)];
+  }, [employees]);
+
+  const hiddenEmpTestCount = useMemo(() => {
+    return employees.filter(emp => isTestRecord(emp.employee_code) || isTestRecord(emp.user?.email || '')).length;
+  }, [employees]);
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((emp) => {
+      if (!showTestData && (isTestRecord(emp.employee_code) || isTestRecord(emp.user?.email || ''))) {
+        return false;
+      }
+      const matchesSearch = !search || 
+        emp.employee_code?.toLowerCase().includes(search.toLowerCase()) ||
+        emp.designation?.toLowerCase().includes(search.toLowerCase()) ||
+        (emp.user && `${emp.user.first_name} ${emp.user.last_name}`.toLowerCase().includes(search.toLowerCase())) ||
+        (emp.user?.email?.toLowerCase().includes(search.toLowerCase()));
+
+      const dept = emp.department?.name || emp.designation;
+      const matchesDept = selectedDept === 'All' || dept === selectedDept;
+
+      return matchesSearch && matchesDept;
+    });
+  }, [employees, search, selectedDept, showTestData]);
+
+  const paginatedEmployees = useMemo(() => {
+    const start = (empPage - 1) * pageSize;
+    return filteredEmployees.slice(start, start + pageSize);
+  }, [filteredEmployees, empPage, pageSize]);
+
+  const paginatedAttendance = useMemo(() => {
+    const start = (attPage - 1) * pageSize;
+    return attendance.slice(start, start + pageSize);
+  }, [attendance, attPage, pageSize]);
 
   // Add Employee Form State
   const [newFirstName, setNewFirstName] = useState('');
@@ -266,74 +329,173 @@ export const HR: React.FC = () => {
       ) : activeTab === 'employees' ? (
         /* Tab 1: Employee Directory */
         <div className="space-y-4">
-          {/* Search bar */}
-          <div className="flex items-center gap-2 max-w-sm">
-            <div className="relative w-full">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by code, designation..."
-                className="w-full pl-9 pr-4 py-1.5 text-xs bg-white border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
+          {/* Search, Dept Filter & Test Data Toggle */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search code, name, designation..."
+                  className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                <span>Department:</span>
+                <select
+                  value={selectedDept}
+                  onChange={(e) => setSelectedDept(e.target.value)}
+                  className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+
+            <TestDataToggle
+              showTestData={showTestData}
+              onToggle={toggleTestData}
+              hiddenCount={hiddenEmpTestCount}
+            />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                  <tr>
-                    <th className="py-2.5 px-4 font-semibold">Code</th>
-                    <th className="py-2.5 px-4 font-semibold">Full Name</th>
-                    <th className="py-2.5 px-4 font-semibold">Designation</th>
-                    <th className="py-2.5 px-4 font-semibold">Email</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Base Salary</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Leave Balance</th>
-                    <th className="py-2.5 px-4 font-semibold text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">Loading directory records...</td>
-                    </tr>
-                  ) : employees.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">No matching employees found.</td>
-                    </tr>
-                  ) : (
-                    employees.map((emp) => (
-                      <tr key={emp.id} className="hover:bg-slate-50">
-                        <td className="py-3 px-4 font-mono font-medium text-slate-900">{emp.employee_code}</td>
-                        <td className="py-3 px-4 font-medium text-slate-800">
-                          {emp.user ? `${emp.user.first_name} ${emp.user.last_name}` : 'Staff Member'}
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 font-medium">{emp.designation}</td>
-                        <td className="py-3 px-4 font-mono text-slate-500">{emp.user?.email || '—'}</td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-900 font-semibold">
-                          ₹{Number(emp.base_salary).toLocaleString('en-IN')}
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-700">
-                          {emp.annual_leave_balance} Days
-                        </td>
-                        <td className="py-3 px-4 text-center">
+          <DataTable<any>
+            columns={[
+              {
+                key: 'employee_code',
+                header: 'Code',
+                render: (emp) => <span className="font-mono font-medium text-slate-900">{emp.employee_code}</span>
+              },
+              {
+                key: 'name',
+                header: 'Full Name',
+                render: (emp) => {
+                  const fullName = emp.user ? `${emp.user.first_name} ${emp.user.last_name}` : 'Staff Member';
+                  const initials = emp.user
+                    ? `${emp.user.first_name?.[0] || ''}${emp.user.last_name?.[0] || ''}`.toUpperCase()
+                    : 'SM';
+                  
+                  // Compute stable avatar background color from initials
+                  const bgColors = ['bg-indigo-600', 'bg-blue-600', 'bg-emerald-600', 'bg-amber-600', 'bg-purple-600', 'bg-rose-600'];
+                  const colorIdx = (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % bgColors.length;
+
+                  return (
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-7 h-7 rounded-full ${bgColors[colorIdx]} text-white text-[11px] font-bold flex items-center justify-center shrink-0`}>
+                        {initials}
+                      </div>
+                      <span className="font-medium text-slate-800">{fullName}</span>
+                    </div>
+                  );
+                }
+              },
+              {
+                key: 'designation',
+                header: 'Designation',
+                render: (emp) => <span className="text-slate-600 font-medium">{emp.designation}</span>
+              },
+              {
+                key: 'email',
+                header: 'Email',
+                render: (emp) => {
+                  const email = emp.user?.email || '—';
+                  const isCopied = copiedEmail === email;
+                  return (
+                    <div className="flex items-center gap-1.5 font-mono text-slate-500 group">
+                      <span className="truncate max-w-[180px]">{email}</span>
+                      {email !== '—' && (
+                        <Tooltip content={isCopied ? "Copied!" : "Copy email"}>
                           <button
-                            onClick={() => openEditModal(emp)}
-                            aria-label={`Edit ${emp.employee_code}`}
-                            className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                            type="button"
+                            onClick={() => handleCopyEmail(email)}
+                            aria-label={`Copy email ${email}`}
+                            className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors"
                           >
-                            <Edit2 className="w-3.5 h-3.5" />
+                            {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
                           </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        </Tooltip>
+                      )}
+                    </div>
+                  );
+                }
+              },
+              {
+                key: 'base_salary',
+                header: 'Base Salary',
+                align: 'right',
+                render: (emp) => (
+                  <span className="font-mono text-slate-900 font-semibold tabular-nums">
+                    {formatCurrency(Number(emp.base_salary))}
+                  </span>
+                )
+              },
+              {
+                key: 'annual_leave_balance',
+                header: 'Leave Balance',
+                align: 'right',
+                render: (emp) => (
+                  <span className="font-mono text-slate-700 tabular-nums">
+                    {emp.annual_leave_balance} Days
+                  </span>
+                )
+              },
+              {
+                key: 'actions',
+                header: 'Action',
+                align: 'center',
+                render: (emp) => (
+                  <button
+                    onClick={() => openEditModal(emp)}
+                    aria-label={`Edit ${emp.employee_code}`}
+                    className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                )
+              }
+            ]}
+            rows={paginatedEmployees}
+            rowKey={(emp) => emp.id}
+            loading={loading}
+            pagination={{
+              page: empPage,
+              pageSize,
+              total: filteredEmployees.length,
+              onPageChange: setEmpPage
+            }}
+            emptyState={
+              <EmptyState
+                icon={Users}
+                title="No employees found"
+                description={
+                  search || selectedDept !== 'All' || !showTestData
+                    ? "No employee records match the active criteria."
+                    : "Add your first employee to get started."
+                }
+                action={
+                  (search || selectedDept !== 'All') ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearch('');
+                        setSelectedDept('All');
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  ) : undefined
+                }
+              />
+            }
+          />
         </div>
       ) : (
         /* Tab 2: Attendance Records */
@@ -348,59 +510,72 @@ export const HR: React.FC = () => {
             />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-                  <tr>
-                    <th className="py-2.5 px-4 font-semibold">Employee</th>
-                    <th className="py-2.5 px-4 font-semibold">Date</th>
-                    <th className="py-2.5 px-4 font-semibold text-center">Status</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Check In</th>
-                    <th className="py-2.5 px-4 font-semibold text-right">Check Out</th>
-                    <th className="py-2.5 px-4 font-semibold">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">Loading attendance data...</td>
-                    </tr>
-                  ) : attendance.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400">No attendance entries recorded for this date.</td>
-                    </tr>
-                  ) : (
-                    attendance.map((rec) => (
-                      <tr key={rec.id} className="hover:bg-slate-50">
-                        <td className="py-3 px-4 font-medium text-slate-900">
-                          {rec.employee?.user ? `${rec.employee.user.first_name} ${rec.employee.user.last_name}` : 'Employee'}
-                          <span className="text-xs text-slate-400 font-mono block">{rec.employee?.employee_code}</span>
-                        </td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{rec.date}</td>
-                        <td className="py-3 px-4 text-center">
-                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-mono font-bold ${
-                            rec.status === 'PRESENT'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : rec.status === 'ON_LEAVE'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : rec.status === 'HALF_DAY'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            {rec.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-800">{rec.check_in_time || '—'}</td>
-                        <td className="py-3 px-4 text-right font-mono text-slate-800">{rec.check_out_time || '—'}</td>
-                        <td className="py-3 px-4 text-slate-500">{rec.notes || '—'}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <DataTable<any>
+            columns={[
+              {
+                key: 'employee',
+                header: 'Employee',
+                render: (rec) => (
+                  <div>
+                    <span className="font-medium text-slate-900 block">
+                      {rec.employee?.user ? `${rec.employee.user.first_name} ${rec.employee.user.last_name}` : 'Employee'}
+                    </span>
+                    <span className="text-xs text-slate-400 font-mono">{rec.employee?.employee_code}</span>
+                  </div>
+                )
+              },
+              {
+                key: 'date',
+                header: 'Date',
+                render: (rec) => <span className="font-mono text-slate-600">{formatDate(rec.date)}</span>
+              },
+              {
+                key: 'status',
+                header: 'Status',
+                align: 'center',
+                render: (rec) => {
+                  const variant = 
+                    rec.status === 'PRESENT' ? 'success' :
+                    rec.status === 'ON_LEAVE' ? 'info' :
+                    rec.status === 'HALF_DAY' ? 'warning' : 'danger';
+                  return <StatusPill variant={variant}>{rec.status}</StatusPill>;
+                }
+              },
+              {
+                key: 'check_in_time',
+                header: 'Check In',
+                align: 'right',
+                render: (rec) => <span className="font-mono text-slate-800 tabular-nums">{rec.check_in_time || '—'}</span>
+              },
+              {
+                key: 'check_out_time',
+                header: 'Check Out',
+                align: 'right',
+                render: (rec) => <span className="font-mono text-slate-800 tabular-nums">{rec.check_out_time || '—'}</span>
+              },
+              {
+                key: 'notes',
+                header: 'Notes',
+                render: (rec) => <span className="text-slate-500">{rec.notes || '—'}</span>
+              }
+            ]}
+            rows={paginatedAttendance}
+            rowKey={(rec) => rec.id}
+            loading={loading}
+            pagination={{
+              page: attPage,
+              pageSize,
+              total: attendance.length,
+              onPageChange: setAttPage
+            }}
+            emptyState={
+              <EmptyState
+                icon={Calendar}
+                title="No attendance entries recorded"
+                description={`No attendance logged for ${formatDate(attendanceDate)}.`}
+              />
+            }
+          />
         </div>
       )}
 

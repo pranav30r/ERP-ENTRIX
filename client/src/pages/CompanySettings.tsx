@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Users, Shield, Plus, CheckCircle, AlertCircle, RefreshCw, Download, Trash2, AlertTriangle, UserX, UserCheck } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Building2, Users, Shield, Plus, CheckCircle, AlertCircle, RefreshCw, Download, Trash2, AlertTriangle, UserX, UserCheck, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { IconButton } from '../components/ui/IconButton';
 import { PageHeader } from '../components/ui/PageHeader';
+import { StatusPill } from '../components/ui/StatusPill';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
+import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { useTestDataToggle } from '../hooks/useTestDataToggle';
+import { isTestRecord } from '../lib/testData';
 
 interface CompanyProfile {
   id: string;
@@ -65,6 +71,51 @@ export const CompanySettings: React.FC = () => {
   const [closing, setClosing] = useState(false);
   const [memberToDeactivate, setMemberToDeactivate] = useState<Member | null>(null);
   const [deactivatingMember, setDeactivatingMember] = useState(false);
+
+  const { showTestData, toggle: toggleTestData } = useTestDataToggle();
+  const [memberSearch, setMemberSearch] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>('All');
+  const [memberPage, setMemberPage] = useState(1);
+  const pageSize = 25;
+
+  const roles = useMemo(() => {
+    const set = new Set<string>();
+    members.forEach((m) => {
+      const r = m.role?.name || `Role #${m.role_id}`;
+      if (r) set.add(r);
+    });
+    return ['All', ...Array.from(set)];
+  }, [members]);
+
+  const hiddenMemberTestCount = useMemo(() => {
+    return members.filter(m => isTestRecord(m.email) || isTestRecord(m.first_name) || isTestRecord(m.last_name)).length;
+  }, [members]);
+
+  const filteredMembers = useMemo(() => {
+    return members.filter((m) => {
+      if (!showTestData && (isTestRecord(m.email) || isTestRecord(m.first_name) || isTestRecord(m.last_name))) {
+        return false;
+      }
+      const fullName = `${m.first_name} ${m.last_name}`.toLowerCase();
+      const matchesSearch = !memberSearch ||
+        fullName.includes(memberSearch.toLowerCase()) ||
+        m.email.toLowerCase().includes(memberSearch.toLowerCase());
+
+      const r = m.role?.name || `Role #${m.role_id}`;
+      const matchesRole = selectedRole === 'All' || r === selectedRole;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [members, showTestData, memberSearch, selectedRole]);
+
+  const paginatedMembers = useMemo(() => {
+    const start = (memberPage - 1) * pageSize;
+    return filteredMembers.slice(start, start + pageSize);
+  }, [filteredMembers, memberPage, pageSize]);
+
+  useEffect(() => {
+    setMemberPage(1);
+  }, [memberSearch, selectedRole, showTestData]);
 
   const handleConfirmDeactivate = async () => {
     if (!memberToDeactivate) return;
@@ -429,88 +480,157 @@ export const CompanySettings: React.FC = () => {
       </div>
 
       {/* Team Members Roster */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900">Team Directory</h2>
+      <div className="space-y-4">
+        {/* Search, Role Filter, and Test Data Toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+            <div className="relative w-full sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search member or email..."
+                className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 text-slate-800"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span>Role:</span>
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                {roles.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <span className="text-xs text-slate-500">
-            {members.length} registered member{members.length === 1 ? '' : 's'}
-          </span>
+
+          <TestDataToggle
+            showTestData={showTestData}
+            onToggle={toggleTestData}
+            hiddenCount={hiddenMemberTestCount}
+          />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-3">Member</th>
-                <th className="px-6 py-3">Assigned Role</th>
-                <th className="px-6 py-3">Designation</th>
-                <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {members.map((m) => {
+        <DataTable<Member>
+          columns={[
+            {
+              key: 'member',
+              header: 'Member',
+              render: (m) => (
+                <div>
+                  <div className="font-medium text-slate-900">
+                    {m.first_name} {m.last_name}
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono">{m.email}</div>
+                </div>
+              )
+            },
+            {
+              key: 'role',
+              header: 'Assigned Role',
+              render: (m) => {
+                const roleName = m.role?.name || `Role #${m.role_id}`;
+                const variant =
+                  roleName.includes('SUPER_ADMIN') || roleName.includes('ADMIN') ? 'danger' :
+                  roleName.includes('OFFICER') || roleName.includes('MANAGER') ? 'info' : 'neutral';
+                return <StatusPill variant={variant}>{roleName}</StatusPill>;
+              }
+            },
+            {
+              key: 'designation',
+              header: 'Designation',
+              render: (m) => (
+                <span className="text-xs font-medium text-slate-700">
+                  {(m as any).employee?.designation || m.department?.name || 'Standard Personnel'}
+                </span>
+              )
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (m) => (
+                <StatusPill variant={m.is_active ? 'success' : 'neutral'}>
+                  {m.is_active ? 'Active' : 'Disabled'}
+                </StatusPill>
+              )
+            },
+            {
+              key: 'actions',
+              header: 'Actions',
+              align: 'right',
+              render: (m) => {
                 const isCurrentUser = Boolean(
                   (user?.id && String(m.id) === String(user.id)) ||
                   (user?.email && m.email.toLowerCase() === user.email.toLowerCase())
                 );
+                if (isCurrentUser) {
+                  return <span className="text-xs text-slate-400 font-medium italic">Current Account</span>;
+                }
+                if (m.is_active) {
+                  return (
+                    <IconButton
+                      icon={UserX}
+                      variant="danger"
+                      tooltip="Deactivate team member"
+                      aria-label={`Deactivate ${m.first_name} ${m.last_name}`}
+                      onClick={() => setMemberToDeactivate(m)}
+                    />
+                  );
+                }
                 return (
-                  <tr key={m.id} className="hover:bg-slate-50/50 transition">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-slate-900">
-                        {m.first_name} {m.last_name}
-                      </div>
-                      <div className="text-xs text-slate-400">{m.email}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-800 border border-slate-300">
-                        {m.role?.name || `Role #${m.role_id}`}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-xs font-medium text-slate-700">
-                      {(m as any).employee?.designation || m.department?.name || 'Standard Personnel'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          m.is_active
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-500 border border-slate-200'
-                        }`}
-                      >
-                        {m.is_active ? 'Active' : 'Disabled'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {isCurrentUser ? (
-                        <span className="text-xs text-slate-400 font-medium italic">Current Account</span>
-                      ) : m.is_active ? (
-                        <IconButton
-                          icon={UserX}
-                          variant="danger"
-                          tooltip="Deactivate team member"
-                          aria-label={`Deactivate ${m.first_name} ${m.last_name}`}
-                          onClick={() => setMemberToDeactivate(m)}
-                        />
-                      ) : (
-                        <IconButton
-                          icon={UserCheck}
-                          variant="ghost"
-                          tooltip="Reactivate team member"
-                          aria-label={`Reactivate ${m.first_name} ${m.last_name}`}
-                          onClick={() => handleToggleMemberStatus(m.id, false)}
-                        />
-                      )}
-                    </td>
-                  </tr>
+                  <IconButton
+                    icon={UserCheck}
+                    variant="ghost"
+                    tooltip="Reactivate team member"
+                    aria-label={`Reactivate ${m.first_name} ${m.last_name}`}
+                    onClick={() => handleToggleMemberStatus(m.id, false)}
+                  />
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              }
+            }
+          ]}
+          rows={paginatedMembers}
+          rowKey={(m) => m.id}
+          loading={loading}
+          pagination={{
+            page: memberPage,
+            pageSize,
+            total: filteredMembers.length,
+            onPageChange: setMemberPage
+          }}
+          emptyState={
+            <EmptyState
+              icon={Users}
+              title="No team members found"
+              description={
+                memberSearch || selectedRole !== 'All' || !showTestData
+                  ? "No team members match your filter criteria."
+                  : "Invite your first colleague to join this workspace."
+              }
+              action={
+                (memberSearch || selectedRole !== 'All') ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMemberSearch('');
+                      setSelectedRole('All');
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  >
+                    Clear filters
+                  </button>
+                ) : undefined
+              }
+            />
+          }
+        />
       </div>
 
       {/* Data Portability & Danger Zone */}

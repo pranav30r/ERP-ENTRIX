@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ShieldCheck, ShieldAlert, RefreshCw, Info, Copy, Check, FileCode2 } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Tooltip } from '../components/ui/Tooltip';
+import { DataTable } from '../components/ui/DataTable';
+import { EmptyState } from '../components/ui/EmptyState';
 import { formatDateTime } from '../lib/format';
 
 interface AuditLogEntry {
@@ -23,6 +25,39 @@ export const AuditLogs: React.FC = () => {
   const [integrity, setIntegrity] = useState<{ valid: boolean; total_checked: number }>({ valid: true, total_checked: 0 });
   const [loading, setLoading] = useState(true);
   const [forbiddenError, setForbiddenError] = useState<string | null>(null);
+  const [selectedAction, setSelectedAction] = useState<string>('All');
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
+
+  const handleCopyHash = (hash: string) => {
+    if (!hash) return;
+    navigator.clipboard.writeText(hash);
+    setCopiedHash(hash);
+    setTimeout(() => setCopiedHash(null), 2000);
+  };
+
+  const actionTypes = useMemo(() => {
+    const set = new Set<string>();
+    logs.forEach((log) => {
+      if (log.action) set.add(log.action);
+    });
+    return ['All', ...Array.from(set)];
+  }, [logs]);
+
+  const filteredLogs = useMemo(() => {
+    if (selectedAction === 'All') return logs;
+    return logs.filter((log) => log.action === selectedAction);
+  }, [logs, selectedAction]);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, page, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedAction]);
 
   const fetchAuditLogs = async () => {
     setLoading(true);
@@ -98,68 +133,137 @@ export const AuditLogs: React.FC = () => {
           <span className="text-[11px] text-slate-400 block">Switch to a Super Admin account in the top-right header to inspect audit blocks.</span>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-sm font-semibold text-slate-800">Audit Events</h3>
-            <Tooltip content="Immutable state mutating events recorded in PostgreSQL B-Tree ledger">
-              <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Audit events details" />
-            </Tooltip>
+        <div className="space-y-4">
+          {/* Action-Type Filter */}
+          <div className="flex items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-medium text-slate-500">Filter Action:</span>
+              <select
+                value={selectedAction}
+                onChange={(e) => setSelectedAction(e.target.value)}
+                className="px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+                {actionTypes.map((action) => (
+                  <option key={action} value={action}>
+                    {action}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">{filteredLogs.length} events logged</span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">{logs.length} records</span>
+
+          <DataTable<AuditLogEntry>
+            columns={[
+              {
+                key: 'id',
+                header: 'ID',
+                render: (log) => <span className="font-mono font-bold text-slate-900">#{log.id}</span>
+              },
+              {
+                key: 'action',
+                header: 'Action',
+                render: (log) => <span className="font-semibold text-indigo-600 font-sans">{log.action}</span>
+              },
+              {
+                key: 'entity',
+                header: 'Target Entity',
+                render: (log) => (
+                  <div className="font-sans">
+                    <span className="text-slate-700 font-medium">{log.entity_name}</span>
+                    <p className="text-xs text-slate-400 font-mono">{log.entity_id}</p>
+                  </div>
+                )
+              },
+              {
+                key: 'current_hash',
+                header: 'SHA-256 Current Hash',
+                render: (log) => {
+                  const isCopied = copiedHash === log.current_hash;
+                  return (
+                    <div className="flex items-center gap-1.5 font-mono text-emerald-700">
+                      <span title={log.current_hash}>
+                        {log.current_hash.substring(0, 12)}...{log.current_hash.substring(56)}
+                      </span>
+                      <Tooltip content={isCopied ? "Copied!" : "Copy hash"}>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyHash(log.current_hash)}
+                          aria-label="Copy hash"
+                          className="p-1 text-slate-400 hover:text-emerald-700 rounded transition-colors"
+                        >
+                          {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </Tooltip>
+                    </div>
+                  );
+                }
+              },
+              {
+                key: 'previous_hash',
+                header: 'Previous Hash',
+                render: (log) => {
+                  const isCopied = copiedHash === log.previous_hash;
+                  return (
+                    <div className="flex items-center gap-1.5 font-mono text-slate-400">
+                      <span title={log.previous_hash}>
+                        {log.previous_hash.substring(0, 12)}...{log.previous_hash.substring(56)}
+                      </span>
+                      <Tooltip content={isCopied ? "Copied!" : "Copy hash"}>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyHash(log.previous_hash)}
+                          aria-label="Copy previous hash"
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors"
+                        >
+                          {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </Tooltip>
+                    </div>
+                  );
+                }
+              },
+              {
+                key: 'timestamp',
+                header: 'Timestamp',
+                align: 'right',
+                render: (log) => (
+                  <span className="text-slate-500 font-sans text-xs">
+                    {formatDateTime(log.timestamp)}
+                  </span>
+                )
+              }
+            ]}
+            rows={paginatedLogs}
+            rowKey={(log) => log.id}
+            loading={loading}
+            pagination={{
+              page,
+              pageSize,
+              total: filteredLogs.length,
+              onPageChange: setPage,
+              showJumps: true
+            }}
+            emptyState={
+              <EmptyState
+                icon={FileCode2}
+                title="No audit logs recorded"
+                description={
+                  selectedAction !== 'All'
+                    ? "No audit records match the selected action filter."
+                    : "No state mutations recorded yet in the cryptographic chain."
+                }
+                action={
+                  selectedAction !== 'All' ? (
+                    <Button variant="outline" size="sm" onClick={() => setSelectedAction('All')}>
+                      Clear action filter
+                    </Button>
+                  ) : undefined
+                }
+              />
+            }
+          />
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
-              <tr>
-                <th className="py-2.5 px-4 font-semibold">ID</th>
-                <th className="py-2.5 px-4 font-semibold">Action</th>
-                <th className="py-2.5 px-4 font-semibold">Target Entity</th>
-                <th className="py-2.5 px-4 font-semibold">SHA-256 Current Hash</th>
-                <th className="py-2.5 px-4 font-semibold">Previous Hash</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono text-xs">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-6 text-center text-slate-400 font-sans">
-                    Verifying SHA-256 cryptographic chain...
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-6 text-center text-slate-400 font-sans">
-                    No state mutations recorded yet.
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50">
-                    <td className="py-3 px-4 font-bold text-slate-900">#{log.id}</td>
-                    <td className="py-3 px-4 font-sans">
-                      <span className="font-semibold text-indigo-600">{log.action}</span>
-                    </td>
-                    <td className="py-3 px-4 font-sans">
-                      <span className="text-slate-700 font-medium">{log.entity_name}</span>
-                      <p className="text-xs text-slate-400 font-mono">{log.entity_id}</p>
-                    </td>
-                    <td className="py-3 px-4 text-emerald-700 truncate max-w-xs" title={log.current_hash}>
-                      {log.current_hash.substring(0, 16)}...{log.current_hash.substring(48)}
-                    </td>
-                    <td className="py-3 px-4 text-slate-400 truncate max-w-xs" title={log.previous_hash}>
-                      {log.previous_hash.substring(0, 16)}...{log.previous_hash.substring(48)}
-                    </td>
-                    <td className="py-3 px-4 text-right text-slate-500 font-sans text-xs">
-                      {formatDateTime(log.timestamp)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
       )}
     </div>
   );

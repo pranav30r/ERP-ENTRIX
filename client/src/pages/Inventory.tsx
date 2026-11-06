@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -149,35 +150,33 @@ export const Inventory: React.FC = () => {
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">Inventory & SKU Master</h1>
-          <p className="text-sm lg:text-base text-slate-500 mt-1">
-            Real-time stock valuation, perpetual inventory ledger, and replenishment reorder points.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={fetchInventory}
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          {canManage && (
+      <PageHeader
+        title="Inventory & SKU Master"
+        subtitle="Real-time stock valuation, perpetual inventory ledger, and replenishment reorder points."
+        actions={
+          <div className="flex items-center gap-3">
             <Button 
-              variant="primary" 
+              variant="outline" 
               size="sm" 
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={fetchInventory}
+              disabled={loading}
             >
-              <Plus className="w-5 h-5" />
-              New SKU Item
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
-          )}
-        </div>
-      </div>
+            {canManage && (
+              <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <Plus className="w-5 h-5" />
+                New SKU Item
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Feedback Toast */}
       {feedback && (
@@ -537,9 +536,9 @@ export const Inventory: React.FC = () => {
 
             <div className="p-6 space-y-4">
               <div>
-                <span className="text-[11px] font-mono text-indigo-600 font-semibold">{selectedItem.sku_code}</span>
+                <span className="text-xs font-mono text-indigo-600 font-semibold">{selectedItem.sku_code}</span>
                 <p className="text-xs font-semibold text-slate-800">{selectedItem.name}</p>
-                <p className="text-[11px] text-slate-500 mt-1">Current Stock: <strong className="font-mono text-slate-900">{selectedItem.stock_qty} {selectedItem.unit_of_measure}</strong></p>
+                <p className="text-xs text-slate-500 mt-1">Current Stock: <strong className="font-mono text-slate-900">{selectedItem.stock_qty} {selectedItem.unit_of_measure}</strong></p>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -592,7 +591,7 @@ export const Inventory: React.FC = () => {
                 />
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1">
                 <div className="flex justify-between">
                   <span>New Balance:</span>
                   <strong className="font-mono text-slate-900">

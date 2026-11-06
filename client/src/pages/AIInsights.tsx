@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { AlertTriangle, Cpu } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
+import { PageHeader } from '../components/ui/PageHeader';
 
 export const AIInsights: React.FC = () => {
   const [forecastData, setForecastData] = useState<any[]>([]);
@@ -80,23 +81,21 @@ export const AIInsights: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">AI Decision Intelligence Suite</h2>
-            {isFallback ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-amber-600" /> Statistical Fallback Active ({modelName})
-              </span>
-            ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                <Cpu className="w-3 h-3 text-emerald-600" /> Python FastAPI ML Live ({modelName})
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">Scikit-learn Random Forest regression and Isolation Forest outlier analytics</p>
-        </div>
-      </div>
+      <PageHeader
+        title="AI Decision Intelligence Suite"
+        subtitle="Scikit-learn Random Forest regression and Isolation Forest outlier analytics"
+        actions={
+          isFallback ? (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-600" /> Statistical Fallback Active ({modelName})
+            </span>
+          ) : (
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+              <Cpu className="w-3 h-3 text-emerald-600" /> Python FastAPI ML Live ({modelName})
+            </span>
+          )
+        }
+      />
 
       {/* Forecast Chart Card */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
@@ -168,14 +167,14 @@ export const AIInsights: React.FC = () => {
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
                       {a.risk_factors.map((rf: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-medium">
+                        <span key={i} className="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-xs font-medium">
                           {rf}
                         </span>
                       ))}
                     </div>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <button className="px-2.5 py-1 bg-white border border-rose-300 text-rose-700 rounded text-[11px] font-semibold hover:bg-rose-50">
+                    <button className="px-2.5 py-1 bg-white border border-rose-300 text-rose-700 rounded text-xs font-semibold hover:bg-rose-50">
                       Triage
                     </button>
                   </td>

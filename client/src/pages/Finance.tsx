@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { formatDateTime } from '../lib/format';
 
 export const Finance: React.FC = () => {
@@ -104,35 +105,35 @@ export const Finance: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Finance & General Ledger</h2>
-          <p className="text-sm text-slate-500 mt-0.5">ACID-compliant double entry accounting with balanced debit/credit audit</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchLedger} disabled={loading} className="dark:border-charcoal-700 dark:text-charcoal-200">
-            <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold ${
-            summary.is_balanced 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800' 
-              : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-800'
-          }`}>
-            {summary.is_balanced ? (
-              <>
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Ledger Balanced (Zero Discrepancy)</span>
-              </>
-            ) : (
-              <>
-                <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                <span>Imbalance Detected</span>
-              </>
-            )}
+      <PageHeader
+        title="Finance & General Ledger"
+        subtitle="ACID-compliant double entry accounting with balanced debit/credit audit"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchLedger} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <div className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border text-xs font-semibold ${
+              summary.is_balanced 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              {summary.is_balanced ? (
+                <>
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Ledger Balanced (Zero Discrepancy)</span>
+                </>
+              ) : (
+                <>
+                  <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <span>Imbalance Detected</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {feedbackMsg && (
         <div className={`p-4 rounded-xl text-sm font-medium border flex items-center justify-between ${
@@ -146,13 +147,13 @@ export const Finance: React.FC = () => {
       )}
 
       {/* Module Navigation Tabs */}
-      <div className="flex items-center gap-3 border-b border-slate-200 dark:border-charcoal-800 pb-2">
+      <div className="flex items-center gap-3 border-b border-border pb-2">
         <button
           onClick={() => setActiveTab('LEDGER')}
           className={`pb-2 text-sm font-semibold border-b-2 transition-all ${
             activeTab === 'LEDGER'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-charcoal-400'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
           General Ledger Journal
@@ -161,8 +162,8 @@ export const Finance: React.FC = () => {
           onClick={() => setActiveTab('RECEIVABLES')}
           className={`pb-2 text-sm font-semibold border-b-2 transition-all ${
             activeTab === 'RECEIVABLES'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-charcoal-400'
+              ? 'border-indigo-600 text-indigo-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
           Accounts Receivable (Sales & Receipts)
@@ -170,8 +171,8 @@ export const Finance: React.FC = () => {
       </div>
 
       {forbiddenError ? (
-        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl p-8 text-center space-y-3">
-          <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl font-bold">
+        <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 text-center space-y-3">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
             403
           </div>
           <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
@@ -182,35 +183,35 @@ export const Finance: React.FC = () => {
         <>
           {/* Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-1">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+              <div className="flex items-center justify-between text-xs text-muted mb-1">
                 <span>Total Debits Posted</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">POSTGRESQL</span>
+                <span className="text-emerald-600 font-bold font-mono">POSTGRESQL</span>
               </div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">
+              <div className="text-3xl font-bold text-text font-mono">
                 ₹{summary.total_debits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
-            <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl p-5 shadow-sm">
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-1">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+              <div className="flex items-center justify-between text-xs text-muted mb-1">
                 <span>Total Credits Posted</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">POSTGRESQL</span>
+                <span className="text-emerald-600 font-bold font-mono">POSTGRESQL</span>
               </div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-white font-mono">
+              <div className="text-3xl font-bold text-text font-mono">
                 ₹{summary.total_credits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
           </div>
 
           {/* Ledger Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800">Double-Entry Journal Postings</h3>
-              <span className="text-xs text-slate-400 font-mono">{entries.length} PostgreSQL Records</span>
+          <div className="bg-surface border border-border rounded-lg shadow-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-text">Double-Entry Journal Postings</h3>
+              <span className="text-xs text-muted font-mono">{entries.length} PostgreSQL Records</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                <thead className="bg-surface-2 border-b border-border text-muted font-mono text-[10px] uppercase">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Entry ID</th>
                     <th className="py-3 px-4 font-semibold">General Ledger Account</th>
@@ -220,7 +221,7 @@ export const Finance: React.FC = () => {
                     <th className="py-3 px-4 font-semibold text-right">Posted At</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-border text-slate-700">
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-slate-400">Loading ledger journal entries...</td>
@@ -256,10 +257,10 @@ export const Finance: React.FC = () => {
         /* ACCOUNTS RECEIVABLE TAB */
         <>
           {/* Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-white dark:bg-charcoal-900 rounded-xl border border-slate-200 dark:border-charcoal-800 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-surface rounded-lg border border-border shadow-card">
             <div>
-              <h3 className="text-sm font-bold text-slate-800 dark:text-white">Customer Sales & Invoicing</h3>
-              <p className="text-xs text-slate-500 dark:text-charcoal-400">Issue outbound customer invoices and record bank receipt payments</p>
+              <h3 className="text-sm font-bold text-text">Customer Sales & Invoicing</h3>
+              <p className="text-xs text-muted">Issue outbound customer invoices and record bank receipt payments</p>
             </div>
             <div className="flex items-center gap-2.5">
               <Button size="sm" onClick={() => setShowInvoiceModal(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white">
@@ -275,31 +276,31 @@ export const Finance: React.FC = () => {
 
           {/* 3 AR Stat Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl p-5 shadow-sm">
-              <div className="text-xs font-semibold text-slate-500 dark:text-charcoal-400 uppercase tracking-wider mb-1">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+              <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Total Billed (Dr 1100)
               </div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
+              <div className="text-2xl font-bold text-text font-mono">
                 ₹{Number(arSummary.total_invoiced).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <div className="mt-2 text-xs text-slate-400">Sales Invoices Issued</div>
             </div>
 
-            <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl p-5 shadow-sm">
-              <div className="text-xs font-semibold text-slate-500 dark:text-charcoal-400 uppercase tracking-wider mb-1">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+              <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Total Collected (Cr 1100)
               </div>
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+              <div className="text-2xl font-bold text-emerald-600 font-mono">
                 ₹{Number(arSummary.total_collected).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <div className="mt-2 text-xs text-slate-400">Cash Received in Bank</div>
             </div>
 
-            <div className="bg-white dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-800 rounded-xl p-5 shadow-sm">
-              <div className="text-xs font-semibold text-slate-500 dark:text-charcoal-400 uppercase tracking-wider mb-1">
+            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+              <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Outstanding Balance
               </div>
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+              <div className="text-2xl font-bold text-indigo-600 font-mono">
                 ₹{Number(arSummary.outstanding_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
               <div className="mt-2 text-xs text-slate-400">Net Pending Collections</div>
@@ -307,14 +308,14 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* AR Ledger Postings Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-800">Recent Accounts Receivable Ledger Records</h3>
-              <span className="text-xs text-slate-400 font-mono">{arSummary.recent_transactions.length} Transactions</span>
+          <div className="bg-surface border border-border rounded-lg shadow-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-text">Recent Accounts Receivable Ledger Records</h3>
+              <span className="text-xs text-muted font-mono">{arSummary.recent_transactions.length} Transactions</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-mono text-[10px] uppercase">
+                <thead className="bg-surface-2 border-b border-border text-muted font-mono text-[10px] uppercase">
                   <tr>
                     <th className="py-3 px-4 font-semibold">Entry ID</th>
                     <th className="py-3 px-4 font-semibold">Type</th>
@@ -333,7 +334,7 @@ export const Finance: React.FC = () => {
                       <tr key={tx.id} className="hover:bg-slate-50 font-mono text-xs">
                         <td className="py-3.5 px-4 font-bold text-slate-900">#{tx.id}</td>
                         <td className="py-3.5 px-4 font-sans font-semibold">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs ${
                             tx.reference_type === 'CUSTOMER_INVOICE' 
                               ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
                               : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -363,36 +364,36 @@ export const Finance: React.FC = () => {
       {/* Modal 1: Issue Customer Sales Invoice */}
       {showInvoiceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-slate-200 dark:border-charcoal-800 shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Issue Customer Sales Invoice</h3>
-              <button onClick={() => setShowInvoiceModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+          <div className="bg-surface rounded-lg border border-border shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-base font-bold text-text">Issue Customer Sales Invoice</h3>
+              <button onClick={() => setShowInvoiceModal(false)} className="text-muted hover:text-text font-bold">&times;</button>
             </div>
             <form onSubmit={handleCreateInvoice} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Customer Name *</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Customer Name *</label>
                 <input
                   type="text"
                   required
                   value={invoiceForm.customer_name}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, customer_name: e.target.value })}
                   placeholder="e.g. Acme Aerospace Ltd"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Invoice Number *</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Invoice Number *</label>
                 <input
                   type="text"
                   required
                   value={invoiceForm.invoice_number}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, invoice_number: e.target.value })}
                   placeholder="e.g. INV-CUST-2026-0042"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Amount (₹) *</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Amount (₹) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -401,17 +402,17 @@ export const Finance: React.FC = () => {
                   value={invoiceForm.amount}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, amount: e.target.value })}
                   placeholder="e.g. 50000.00"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Description</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Description</label>
                 <input
                   type="text"
                   value={invoiceForm.description}
                   onChange={(e) => setInvoiceForm({ ...invoiceForm, description: e.target.value })}
                   placeholder="e.g. Manufacturing components supply batch #1"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div className="pt-2 flex items-center justify-end gap-2.5">
@@ -428,35 +429,35 @@ export const Finance: React.FC = () => {
       {/* Modal 2: Record Customer Payment Receipt */}
       {showReceiptModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-slate-200 dark:border-charcoal-800 shadow-2xl w-full max-w-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">Record Customer Payment Receipt</h3>
-              <button onClick={() => setShowReceiptModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+          <div className="bg-surface rounded-lg border border-border shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-base font-bold text-text">Record Customer Payment Receipt</h3>
+              <button onClick={() => setShowReceiptModal(false)} className="text-muted hover:text-text font-bold">&times;</button>
             </div>
             <form onSubmit={handleRecordReceipt} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Customer Name</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Customer Name</label>
                 <input
                   type="text"
                   value={receiptForm.customer_name}
                   onChange={(e) => setReceiptForm({ ...receiptForm, customer_name: e.target.value })}
                   placeholder="e.g. Acme Aerospace Ltd"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Invoice Reference *</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Invoice Reference *</label>
                 <input
                   type="text"
                   required
                   value={receiptForm.invoice_number}
                   onChange={(e) => setReceiptForm({ ...receiptForm, invoice_number: e.target.value })}
                   placeholder="e.g. INV-CUST-2026-0042"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Amount Collected (₹) *</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Amount Collected (₹) *</label>
                 <input
                   type="number"
                   step="0.01"
@@ -465,15 +466,15 @@ export const Finance: React.FC = () => {
                   value={receiptForm.amount}
                   onChange={(e) => setReceiptForm({ ...receiptForm, amount: e.target.value })}
                   placeholder="e.g. 50000.00"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-transparent text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-charcoal-300 uppercase mb-1.5">Payment Method</label>
+                <label className="block text-xs font-semibold text-muted uppercase mb-1.5">Payment Method</label>
                 <select
                   value={receiptForm.payment_method}
                   onChange={(e) => setReceiptForm({ ...receiptForm, payment_method: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-charcoal-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-charcoal-900 text-slate-900 dark:text-white"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface text-text"
                 >
                   <option value="BANK_TRANSFER">Bank Wire / NEFT / RTGS</option>
                   <option value="UPI">UPI Instant Payment</option>

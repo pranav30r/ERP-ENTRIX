@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { WorkflowTimeline, ProcurementStage } from '../components/WorkflowTimeline';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { useAuth } from '../context/AuthContext';
 
 export const Dashboard: React.FC = () => {
@@ -90,22 +91,16 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Page Title & Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">
-            Executive Operations Dashboard
-          </h2>
-          <p className="text-sm lg:text-base text-slate-500 mt-1">
-            Real-time organizational telemetry across active departments • FY2026-Q4
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <PageHeader
+        title="Executive Operations Dashboard"
+        subtitle="Real-time organizational telemetry across active departments • FY2026-Q4"
+        actions={
           <Button variant="outline" size="sm" onClick={fetchDashboardData} disabled={loading} aria-label="Refresh telemetry">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             Refresh
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
         <div role="alert" className="p-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-xl flex items-center justify-between">

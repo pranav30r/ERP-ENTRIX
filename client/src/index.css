@@ -2,9 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Phase 2 Design Tokens (RGB channels for opacity utility support) */
+  --bg: 248 250 252;          /* #f8fafc */
+  --surface: 255 255 255;      /* #ffffff */
+  --surface-2: 241 245 249;    /* #f1f5f9 */
+  --border: 226 232 240;       /* #e2e8f0 */
+  --text: 15 23 42;            /* #0f172a */
+  --text-muted: 100 116 139;   /* #64748b */
+  --brand: 79 70 229;          /* #4f46e5 (Indigo 600 hue) */
+  --success: 5 150 105;        /* #059669 */
+  --warning: 217 119 6;        /* #d97706 */
+  --danger: 220 38 38;         /* #dc2626 */
+  --info: var(--brand);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
 @layer base {
   body {
-    @apply bg-stripe-canvas text-slate-800 font-sans antialiased;
+    @apply bg-bg text-text font-sans antialiased;
   }
 }
 

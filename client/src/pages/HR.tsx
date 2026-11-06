@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, UserPlus, Calendar, Search, Edit2, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 
 export const HR: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'employees' | 'attendance'>('employees');
@@ -181,32 +182,34 @@ export const HR: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Human Resource Management</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Personnel directory, organizational records, and daily attendance tracking</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={activeTab === 'employees' ? fetchEmployees : fetchAttendance} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          {activeTab === 'employees' ? (
-            <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-              <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-              Add Employee
+      <PageHeader
+        title="Human Resource Management"
+        subtitle="Personnel directory, organizational records, and daily attendance tracking"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={activeTab === 'employees' ? fetchEmployees : fetchAttendance} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
-          ) : (
-            <Button variant="primary" size="sm" onClick={() => {
-              if (employees.length > 0 && !attEmployeeId) setAttEmployeeId(employees[0].id);
-              setShowAttendanceModal(true);
-            }}>
-              <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              Log Attendance
-            </Button>
-          )}
-        </div>
-      </div>
+            {activeTab === 'employees' ? (
+              <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+                <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                Add Employee
+              </Button>
+            ) : (
+              <Button variant="primary" size="sm" onClick={() => {
+                if (employees.length > 0 && !attEmployeeId) setAttEmployeeId(employees[0].id);
+                setShowAttendanceModal(true);
+              }}>
+                <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                Log Attendance
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Feedback Alert */}
 
       {/* Feedback Alert */}
       {feedbackMsg && (
@@ -372,11 +375,11 @@ export const HR: React.FC = () => {
                       <tr key={rec.id} className="hover:bg-slate-50">
                         <td className="py-3 px-4 font-medium text-slate-900">
                           {rec.employee?.user ? `${rec.employee.user.first_name} ${rec.employee.user.last_name}` : 'Employee'}
-                          <span className="text-[10px] text-slate-400 font-mono block">{rec.employee?.employee_code}</span>
+                          <span className="text-xs text-slate-400 font-mono block">{rec.employee?.employee_code}</span>
                         </td>
                         <td className="py-3 px-4 font-mono text-slate-600">{rec.date}</td>
                         <td className="py-3 px-4 text-center">
-                          <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-mono font-bold ${
                             rec.status === 'PRESENT'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : rec.status === 'ON_LEAVE'

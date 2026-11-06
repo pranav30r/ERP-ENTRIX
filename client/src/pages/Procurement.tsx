@@ -17,6 +17,7 @@ import {
 import { WorkflowTimeline, ProcurementStage } from '../components/WorkflowTimeline';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { useAuth } from '../context/AuthContext';
 
 type TabType = 'requisitions' | 'invoices' | 'suppliers';
@@ -305,38 +306,36 @@ export const Procurement: React.FC = () => {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight">Procurement & Supplier Invoicing</h2>
-          <p className="text-sm lg:text-base text-slate-500 mt-1">
-            8-stage requisition workflow, automated PO issuance, and GAAP-compliant 3-way invoice matching
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={loadAllData} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-
-          {activeTab === 'requisitions' && (
-            <Button variant="primary" size="sm" onClick={() => setShowPRModal(true)}>
-              <Plus className="w-5 h-5" /> New Requisition
+      <PageHeader
+        title="Procurement & Supplier Invoicing"
+        subtitle="8-stage requisition workflow, automated PO issuance, and GAAP-compliant 3-way invoice matching"
+        actions={
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={loadAllData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
-          )}
 
-          {activeTab === 'invoices' && canMatchInvoices && (
-            <Button variant="primary" size="sm" onClick={() => setShowMatchModal(true)}>
-              <FileCheck2 className="w-5 h-5" /> Match New Invoice
-            </Button>
-          )}
+            {activeTab === 'requisitions' && (
+              <Button variant="primary" size="sm" onClick={() => setShowPRModal(true)}>
+                <Plus className="w-5 h-5" /> New Requisition
+              </Button>
+            )}
 
-          {activeTab === 'suppliers' && (
-            <Button variant="primary" size="sm" onClick={() => setShowSupplierModal(true)}>
-              <Building2 className="w-5 h-5" /> Register Supplier
-            </Button>
-          )}
-        </div>
-      </div>
+            {activeTab === 'invoices' && canMatchInvoices && (
+              <Button variant="primary" size="sm" onClick={() => setShowMatchModal(true)}>
+                <FileCheck2 className="w-5 h-5" /> Match New Invoice
+              </Button>
+            )}
+
+            {activeTab === 'suppliers' && (
+              <Button variant="primary" size="sm" onClick={() => setShowSupplierModal(true)}>
+                <Building2 className="w-5 h-5" /> Register Supplier
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-slate-200 gap-2">
@@ -842,7 +841,7 @@ export const Procurement: React.FC = () => {
                 />
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-500">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-500">
                 <span className="font-semibold text-slate-700">Workflow Routing Rule:</span> Requisitions &ge; ₹10,000
                 automatically escalate to Finance Officer for sign-off after Department Lead approval.
               </div>
@@ -911,7 +910,7 @@ export const Procurement: React.FC = () => {
                 </select>
                 {(!orders.find((o) => o.id === matchPoId)?.grns ||
                   orders.find((o) => o.id === matchPoId)?.grns?.length === 0) && (
-                  <p className="text-[10px] text-amber-600 mt-1">
+                  <p className="text-xs text-amber-600 mt-1">
                     Notice: This PO has no GRN yet. Receive goods first from Requisitions tab to enable 3-way match.
                   </p>
                 )}
@@ -955,7 +954,7 @@ export const Procurement: React.FC = () => {
                 />
               </div>
 
-              <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-[11px] text-slate-600">
+              <div className="p-3 bg-indigo-50/50 rounded-lg border border-indigo-100 text-xs text-slate-600">
                 <span className="font-semibold text-indigo-900">3-Way Match Rule:</span> Quantity must match GRN received
                 units, and price variance must be &le; 1.0%. Successful match automatically credits Accounts Payable
                 and debits GR/IR Suspense.

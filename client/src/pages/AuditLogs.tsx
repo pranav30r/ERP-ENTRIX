@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { formatDateTime } from '../lib/format';
 
 interface AuditLogEntry {
@@ -51,35 +52,35 @@ export const AuditLogs: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Cryptographic Audit Trail Explorer</h2>
-          <p className="text-xs text-slate-500 mt-0.5">SHA-256 chained governance records with mathematical tamper validation</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchAuditLogs} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Re-verify Chain
-          </Button>
-          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-md border text-xs font-semibold ${
-            integrity.valid 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-              : 'bg-rose-50 text-rose-700 border-rose-200'
-          }`}>
-            {integrity.valid ? (
-              <>
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Chain Verified ({integrity.total_checked} Records)</span>
-              </>
-            ) : (
-              <>
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                <span>Tamper Detected! Chain Broken</span>
-              </>
-            )}
+      <PageHeader
+        title="Cryptographic Audit Trail Explorer"
+        subtitle="SHA-256 chained governance records with mathematical tamper validation"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchAuditLogs} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              Re-verify Chain
+            </Button>
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-md border text-xs font-semibold ${
+              integrity.valid 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              {integrity.valid ? (
+                <>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Chain Verified ({integrity.total_checked} Records)</span>
+                </>
+              ) : (
+                <>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Tamper Detected! Chain Broken</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {forbiddenError ? (
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-8 text-center space-y-3">
@@ -108,7 +109,7 @@ export const AuditLogs: React.FC = () => {
                 <th className="py-2.5 px-4 font-semibold text-right">Timestamp</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono text-[11px]">
+            <tbody className="divide-y divide-slate-100 text-slate-700 font-mono text-xs">
               {loading ? (
                 <tr>
                   <td colSpan={6} className="py-6 text-center text-slate-400 font-sans">
@@ -130,7 +131,7 @@ export const AuditLogs: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 font-sans">
                       <span className="text-slate-700 font-medium">{log.entity_name}</span>
-                      <p className="text-[10px] text-slate-400 font-mono">{log.entity_id}</p>
+                      <p className="text-xs text-slate-400 font-mono">{log.entity_id}</p>
                     </td>
                     <td className="py-3 px-4 text-emerald-700 truncate max-w-xs" title={log.current_hash}>
                       {log.current_hash.substring(0, 16)}...{log.current_hash.substring(48)}
@@ -138,7 +139,7 @@ export const AuditLogs: React.FC = () => {
                     <td className="py-3 px-4 text-slate-400 truncate max-w-xs" title={log.previous_hash}>
                       {log.previous_hash.substring(0, 16)}...{log.previous_hash.substring(48)}
                     </td>
-                    <td className="py-3 px-4 text-right text-slate-500 font-sans text-[11px]">
+                    <td className="py-3 px-4 text-right text-slate-500 font-sans text-xs">
                       {formatDateTime(log.timestamp)}
                     </td>
                   </tr>

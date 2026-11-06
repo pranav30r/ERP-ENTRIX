@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const storedToken = localStorage.getItem('entrix_token');
         const storedUser = localStorage.getItem('entrix_user');
 
-        if (storedToken && storedUser) {
+        if (storedToken && storedUser && storedUser !== 'undefined') {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
         } else {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { RefreshCw, Plus, CheckCircle, X, Loader2, PlayCircle } from 'lucide-react';
 
 export const Projects: React.FC = () => {
@@ -108,22 +109,22 @@ export const Projects: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Project Milestones & Resource Operations</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Tracking developer hours, milestone completion, and budget burndown</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchProjects} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            New Project
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Project Milestones & Resource Operations"
+        subtitle="Tracking developer hours, milestone completion, and budget burndown"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchProjects} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              New Project
+            </Button>
+          </div>
+        }
+      />
 
       {feedback && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center justify-between">
@@ -158,13 +159,13 @@ export const Projects: React.FC = () => {
               <div key={p.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    <span className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
                       {p.code}
                     </span>
                     <h3 className="text-sm font-bold text-slate-800 mt-1.5">{p.name}</h3>
                     <p className="text-xs text-slate-400 font-medium">{p.department_code || 'General'} Department</p>
                   </div>
-                  <span className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full border ${
+                  <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full border ${
                     isCompleted
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-blue-50 text-blue-700 border-blue-200'
@@ -192,19 +193,19 @@ export const Projects: React.FC = () => {
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs">
                   <div>
-                    <span className="text-[11px] text-slate-400">Budget</span>
+                    <span className="text-xs text-slate-400">Budget</span>
                     <p className="font-mono font-bold text-slate-800">
                       ₹{Number(p.consumed_budget || 0).toLocaleString()} / ₹{Number(p.allocated_budget || 0).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400">Milestones</span>
+                    <span className="text-xs text-slate-400">Milestones</span>
                     <p className="font-mono font-bold text-slate-800">
                       {p.milestones_completed} / {p.milestones_total}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-400">Dev Hours</span>
+                    <span className="text-xs text-slate-400">Dev Hours</span>
                     <p className="font-mono font-bold text-slate-800">
                       {p.logged_hours} / {p.estimated_hours} hrs
                     </p>

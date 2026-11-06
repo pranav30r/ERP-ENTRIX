@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Modal } from '../components/ui/Modal';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface CompanyProfile {
   id: string;
@@ -279,34 +280,31 @@ export const CompanySettings: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Organization Settings</h1>
-          <p className="text-sm text-slate-500">
-            Manage your company profile, enterprise team members, and role assignments.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setInviteModalOpen(true)}
-          disabled={isSeatLimitReached}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm ${
-            isSeatLimitReached
-              ? 'bg-slate-300 text-slate-500 cursor-not-allowed dark:bg-charcoal-700 dark:text-charcoal-400'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          Invite Team Member
-        </button>
-      </div>
+      <PageHeader
+        title="Organization Settings"
+        subtitle="Manage your company profile, enterprise team members, and role assignments."
+        actions={
+          <button
+            onClick={() => setInviteModalOpen(true)}
+            disabled={isSeatLimitReached}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition shadow-sm ${
+              isSeatLimitReached
+                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20'
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            Invite Team Member
+          </button>
+        }
+      />
 
       {notification && (
         <div
           className={`p-4 rounded-lg flex items-center justify-between text-sm ${
             notification.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-              : 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              : 'bg-rose-50 text-rose-800 border border-rose-200'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -322,10 +320,10 @@ export const CompanySettings: React.FC = () => {
       {/* Profile & Entitlement Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Company Card */}
-        <div className="bg-white dark:bg-charcoal-900 p-6 rounded-xl border border-slate-200 dark:border-charcoal-800 shadow-sm col-span-2">
+        <div className="bg-surface p-6 rounded-lg border border-border shadow-card col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
@@ -374,7 +372,7 @@ export const CompanySettings: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsEditingName(true)}
-                className="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 font-medium"
+                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
               >
                 Edit
               </button>
@@ -383,7 +381,7 @@ export const CompanySettings: React.FC = () => {
         </div>
 
         {/* Plan & Seat Usage Card */}
-        <div className="bg-white dark:bg-charcoal-900 p-6 rounded-xl border border-slate-200 dark:border-charcoal-800 shadow-sm flex flex-col justify-between">
+        <div className="bg-surface p-6 rounded-lg border border-border shadow-card flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -402,7 +400,7 @@ export const CompanySettings: React.FC = () => {
                   {currentMembersCount} / {maxUsers >= 999999 ? 'Unlimited' : maxUsers}
                 </span>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-charcoal-800 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                 <div
                   className={`h-2 rounded-full transition-all ${
                     isSeatLimitReached ? 'bg-rose-500' : 'bg-indigo-600'
@@ -418,10 +416,10 @@ export const CompanySettings: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-charcoal-800">
+          <div className="mt-6 pt-4 border-t border-border">
             <Link
               to="/settings/billing"
-              className="w-full block text-center py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg transition"
+              className="w-full block text-center py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
             >
               Manage Plans & Invoices &rarr;
             </Link>
@@ -562,9 +560,9 @@ export const CompanySettings: React.FC = () => {
       {/* Close Account Confirmation Modal */}
       {closeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-charcoal-900 rounded-xl max-w-md w-full border border-rose-300 dark:border-rose-900 shadow-2xl overflow-hidden">
-            <div className="px-6 py-4 bg-rose-50 dark:bg-rose-950/40 border-b border-rose-100 dark:border-rose-900/60 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-rose-700 dark:text-rose-300">
+          <div className="bg-surface rounded-lg max-w-md w-full border border-rose-300 shadow-2xl overflow-hidden">
+            <div className="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-700">
                 <AlertTriangle className="w-5 h-5" />
                 <h3 className="text-sm font-bold">Confirm Organization Closure</h3>
               </div>
@@ -577,16 +575,16 @@ export const CompanySettings: React.FC = () => {
             </div>
 
             <form onSubmit={handleCloseAccount} className="p-6 space-y-4">
-              <p className="text-xs text-slate-600 dark:text-charcoal-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 This action is irreversible. To confirm closure of <strong>{profile?.name}</strong>, type its exact slug below:
               </p>
 
-              <div className="p-2 bg-slate-100 dark:bg-charcoal-800 rounded font-mono text-xs text-center font-bold text-slate-800 dark:text-white select-all">
+              <div className="p-2 bg-slate-100 rounded font-mono text-xs text-center font-bold text-slate-800 select-all">
                 {profile?.slug}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Type Company Slug to Confirm
                 </label>
                 <input
@@ -595,15 +593,15 @@ export const CompanySettings: React.FC = () => {
                   value={confirmSlugInput}
                   onChange={(e) => setConfirmSlugInput(e.target.value)}
                   placeholder={profile?.slug}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-rose-300 dark:border-rose-800 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white font-mono"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-rose-300 bg-surface text-slate-900 font-mono"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-charcoal-800">
+              <div className="pt-4 flex justify-end gap-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setCloseModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-charcoal-300 hover:bg-slate-100 dark:hover:bg-charcoal-800 rounded-lg"
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
                   Cancel
                 </button>
@@ -623,9 +621,9 @@ export const CompanySettings: React.FC = () => {
       {/* Invite Member Modal */}
       {inviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-charcoal-900 rounded-xl max-w-md w-full border border-slate-200 dark:border-charcoal-800 shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-charcoal-800 flex justify-between items-center">
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Invite Team Member</h3>
+          <div className="bg-surface rounded-lg max-w-md w-full border border-border shadow-xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center">
+              <h3 className="text-base font-semibold text-slate-900">Invite Team Member</h3>
               <button
                 onClick={() => setInviteModalOpen(false)}
                 className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
@@ -637,7 +635,7 @@ export const CompanySettings: React.FC = () => {
             <form onSubmit={handleInviteMember} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     First Name
                   </label>
                   <input
@@ -645,11 +643,11 @@ export const CompanySettings: React.FC = () => {
                     required
                     value={inviteForm.firstName}
                     onChange={(e) => setInviteForm({ ...inviteForm, firstName: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
                     Last Name
                   </label>
                   <input
@@ -657,13 +655,13 @@ export const CompanySettings: React.FC = () => {
                     required
                     value={inviteForm.lastName}
                     onChange={(e) => setInviteForm({ ...inviteForm, lastName: e.target.value })}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-slate-900"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Work Email Address
                 </label>
                 <input
@@ -671,19 +669,19 @@ export const CompanySettings: React.FC = () => {
                   required
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-slate-900"
                   placeholder="alex@company.com"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Assigned ERP Role
                 </label>
                 <select
                   value={inviteForm.roleId}
                   onChange={(e) => setInviteForm({ ...inviteForm, roleId: Number(e.target.value) })}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-slate-900"
                 >
                   <option value={2}>Staff User (Standard Access)</option>
                   <option value={3}>Procurement Officer</option>
@@ -694,7 +692,7 @@ export const CompanySettings: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-charcoal-300 mb-1">
+                <label className="block text-xs font-medium text-slate-700 mb-1">
                   Job Designation (Optional)
                 </label>
                 <input
@@ -702,15 +700,15 @@ export const CompanySettings: React.FC = () => {
                   value={inviteForm.designation}
                   onChange={(e) => setInviteForm({ ...inviteForm, designation: e.target.value })}
                   placeholder="e.g. Senior Inventory Analyst"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-slate-900 dark:text-white"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface text-slate-900"
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100 dark:border-charcoal-800">
+              <div className="pt-4 flex justify-end gap-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setInviteModalOpen(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-charcoal-300 hover:bg-slate-100 dark:hover:bg-charcoal-800 rounded-lg"
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
                   Cancel
                 </button>

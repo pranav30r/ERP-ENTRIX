@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../services/api';
 import { formatDateTime } from '../lib/format';
+import { PageHeader } from '../components/ui/PageHeader';
 
 const PLAN_TIER_RANK: Record<string, number> = {
   FREE: 0,
@@ -257,28 +258,22 @@ export const SubscriptionBilling: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Plans & Monetization Management
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
-              Sandbox Simulation Mode (Zero Cost)
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-charcoal-300">
-            Monitor your subscription status, resource allocations, metered operations, and invoice records.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Plans & Monetization Management"
+        subtitle="Monitor your subscription status, resource allocations, metered operations, and invoice records."
+        actions={
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            Sandbox Simulation Mode (Zero Cost)
+          </span>
+        }
+      />
 
       {notification && (
         <div
           className={`p-4 rounded-lg flex items-center justify-between text-sm ${
             notification.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
-              : 'bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+              : 'bg-rose-50 text-rose-800 border border-rose-200'
           }`}
         >
           <span>{notification.message}</span>
@@ -289,11 +284,11 @@ export const SubscriptionBilling: React.FC = () => {
       )}
 
       {/* Active Subscription Banner */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+      <div className="bg-surface rounded-lg border border-border p-6 shadow-card">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
-              <span className="text-xl font-bold text-slate-900">
+              <span className="text-xl font-bold text-text">
                 {currentPlan?.name || 'ENTRIX ERP Plan'}
               </span>
               <span
@@ -308,7 +303,7 @@ export const SubscriptionBilling: React.FC = () => {
                 {sub?.status || 'ACTIVE'}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted">
               {sub?.cancel_at_period_end
                 ? `Expires on ${formatDateTime(sub.current_period_end)} (Auto-renew disabled)`
                 : `Next billing date: ${formatDateTime(sub?.current_period_end || Date.now())}`}
@@ -322,7 +317,7 @@ export const SubscriptionBilling: React.FC = () => {
               className={`px-4 py-2 rounded-lg text-xs font-semibold border transition ${
                 sub?.cancel_at_period_end
                   ? 'bg-indigo-600 hover:bg-indigo-700 text-white border-transparent'
-                  : 'bg-white dark:bg-charcoal-800 text-slate-700 dark:text-charcoal-200 border-slate-200 dark:border-charcoal-700 hover:bg-slate-50'
+                  : 'bg-surface text-slate-700 border-border hover:bg-surface-2'
               }`}
             >
               {sub?.cancel_at_period_end ? 'Resume Auto-Renew' : 'Cancel Auto-Renew'}
@@ -331,18 +326,18 @@ export const SubscriptionBilling: React.FC = () => {
         </div>
 
         {/* Resource Metering */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-slate-100 dark:border-charcoal-800">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-border">
           {/* Seats Meter */}
-          <div className="p-4 rounded-lg bg-slate-50 dark:bg-charcoal-800/60 border border-slate-100 dark:border-charcoal-700/50">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-2">
+          <div className="p-4 rounded-lg bg-surface-2 border border-border">
+            <div className="flex items-center justify-between text-xs text-muted mb-2">
               <span className="flex items-center gap-1.5 font-medium">
                 <Users className="w-3.5 h-3.5 text-indigo-500" /> Active Users
               </span>
-              <span className="font-semibold text-slate-800 dark:text-white">
+              <span className="font-semibold text-text">
                 {usage?.activeUsers} / {usage && usage.maxUsers >= 999999 ? '∞' : usage?.maxUsers}
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-charcoal-700 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
               <div
                 className="bg-indigo-600 h-1.5 rounded-full"
                 style={{
@@ -353,16 +348,16 @@ export const SubscriptionBilling: React.FC = () => {
           </div>
 
           {/* AI Operation Meter */}
-          <div className="p-4 rounded-lg bg-slate-50 dark:bg-charcoal-800/60 border border-slate-100 dark:border-charcoal-700/50">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-2">
+          <div className="p-4 rounded-lg bg-surface-2 border border-border">
+            <div className="flex items-center justify-between text-xs text-muted mb-2">
               <span className="flex items-center gap-1.5 font-medium">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Monthly AI Ops
               </span>
-              <span className="font-semibold text-slate-800 dark:text-white">
+              <span className="font-semibold text-text">
                 {usage?.aiInferences} / {usage && usage.maxAiInferences >= 999999 ? '∞' : usage?.maxAiInferences}
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-charcoal-700 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
               <div
                 className="bg-purple-600 h-1.5 rounded-full"
                 style={{
@@ -376,16 +371,16 @@ export const SubscriptionBilling: React.FC = () => {
           </div>
 
           {/* Storage Meter */}
-          <div className="p-4 rounded-lg bg-slate-50 dark:bg-charcoal-800/60 border border-slate-100 dark:border-charcoal-700/50">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-charcoal-400 mb-2">
+          <div className="p-4 rounded-lg bg-surface-2 border border-border">
+            <div className="flex items-center justify-between text-xs text-muted mb-2">
               <span className="flex items-center gap-1.5 font-medium">
                 <HardDrive className="w-3.5 h-3.5 text-indigo-500" /> Vault Storage
               </span>
-              <span className="font-semibold text-slate-800 dark:text-white">
+              <span className="font-semibold text-text">
                 {usage?.storageMB} MB / {(usage?.maxStorageMB || 0) / 1024 >= 1 ? `${(usage?.maxStorageMB || 0) / 1024} GB` : `${usage?.maxStorageMB} MB`}
               </span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-charcoal-700 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
               <div
                 className="bg-emerald-600 h-1.5 rounded-full"
                 style={{
@@ -436,7 +431,7 @@ export const SubscriptionBilling: React.FC = () => {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-base text-slate-900">{p.name}</h3>
                     {isCurrent && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
                         Current
                       </span>
                     )}

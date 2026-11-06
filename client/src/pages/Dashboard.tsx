@@ -3,12 +3,9 @@ import {
   AlertTriangle,
   Boxes,
   DollarSign,
-  ArrowUpRight,
   RefreshCw,
-  Info,
   Clock,
   Plus,
-  ShieldCheck,
   CheckCircle2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -20,7 +17,6 @@ import { useAuth } from '../context/AuthContext';
 export const Dashboard: React.FC = () => {
   const { hasRole } = useAuth();
   const [inventory, setInventory] = useState<any[]>([]);
-  const [metrics, setMetrics] = useState({ total_items: 0, low_stock_items: 0 });
   const [recentPR, setRecentPR] = useState<any | null>(null);
   const [activeStage, setActiveStage] = useState<ProcurementStage>('PENDING_MANAGER');
   const [activeAmount, setActiveAmount] = useState<number>(24500);
@@ -48,7 +44,6 @@ export const Dashboard: React.FC = () => {
 
       if (invRes && invRes.data.success) {
         setInventory(invRes.data.data || []);
-        setMetrics(invRes.data.metrics || { total_items: 0, low_stock_items: 0 });
       }
 
       if (prsRes && prsRes.data.success && Array.isArray(prsRes.data.data)) {
@@ -79,10 +74,18 @@ export const Dashboard: React.FC = () => {
     fetchDashboardData();
   }, []);
 
-  const totalValuation = inventory.reduce(
+  // Filter out test records (SKUs starting with "TEST-" or "TX-")
+  const displayInventory = inventory.filter(
+    (item) => !item.sku_code?.startsWith('TEST-') && !item.sku_code?.startsWith('TX-')
+  );
+
+  const totalValuation = displayInventory.reduce(
     (acc, curr) => acc + Number(curr.stock_qty || 0) * Number(curr.unit_price || 0),
     0
   );
+
+  const totalItemsCount = displayInventory.length;
+  const lowStockCount = displayInventory.filter((item) => Number(item.stock_qty) <= Number(item.safety_stock)).length;
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -93,13 +96,10 @@ export const Dashboard: React.FC = () => {
             Executive Operations Dashboard
           </h2>
           <p className="text-sm lg:text-base text-slate-500 mt-1">
-            Real-time organizational telemetry across active departments
+            Real-time organizational telemetry across active departments • FY2026-Q4
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-slate-500 bg-slate-100 px-3.5 py-2 rounded-lg border border-slate-200">
-            Tenant Period: FY2026-Q4
-          </span>
           <Button variant="outline" size="sm" onClick={fetchDashboardData} disabled={loading} aria-label="Refresh telemetry">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             Refresh
@@ -117,7 +117,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Quick Operations Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
         <span className="text-slate-400 font-mono text-xs font-semibold uppercase tracking-wider mr-1">
           Quick Actions:
         </span>
@@ -126,26 +126,6 @@ export const Dashboard: React.FC = () => {
           className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg font-semibold text-sm border border-indigo-200/60 transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5 text-indigo-600" /> New Requisition
-        </Link>
-        <Link
-          to="/inventory"
-          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-sm border border-slate-200 transition-colors shadow-sm"
-        >
-          <Boxes className="w-5 h-5 text-slate-600" /> Manage Inventory
-        </Link>
-        {hasRole(['SUPER_ADMIN', 'FINANCE_OFFICER']) && (
-          <Link
-            to="/finance"
-            className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-sm border border-slate-200 transition-colors shadow-sm"
-          >
-            <DollarSign className="w-5 h-5 text-emerald-600" /> General Ledger
-          </Link>
-        )}
-        <Link
-          to="/audit"
-          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 text-slate-700 hover:bg-slate-100 rounded-lg font-semibold text-sm border border-slate-200 transition-colors shadow-sm"
-        >
-          <ShieldCheck className="w-5 h-5 text-purple-600" /> Audit Trail
         </Link>
       </div>
 
@@ -159,13 +139,9 @@ export const Dashboard: React.FC = () => {
               <Boxes className="w-6 h-6 text-indigo-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">{metrics.total_items}</span>
+              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">{totalItemsCount}</span>
               <span className="text-sm font-semibold text-emerald-600">Active SKUs</span>
             </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs lg:text-sm text-slate-400 flex items-center gap-1.5 font-mono">
-            <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Count of items in warehouse registry</span>
           </div>
         </div>
 
@@ -180,12 +156,7 @@ export const Dashboard: React.FC = () => {
               <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">
                 ₹{totalValuation.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </span>
-              <span className="text-xs text-slate-400 font-mono">PostgreSQL</span>
             </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs lg:text-sm text-slate-400 flex items-center gap-1.5 font-mono">
-            <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Formula: Σ(stock_qty × unit_price)</span>
           </div>
         </div>
 
@@ -197,13 +168,9 @@ export const Dashboard: React.FC = () => {
               <AlertTriangle className="w-6 h-6 text-amber-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono">{metrics.low_stock_items}</span>
+              <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono">{lowStockCount}</span>
               <span className="text-sm font-semibold text-amber-700">Needs replenishment</span>
             </div>
-          </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs lg:text-sm text-slate-400 flex items-center gap-1.5 font-mono">
-            <Info className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Criteria: stock_qty ≤ safety_stock</span>
           </div>
         </div>
 
@@ -219,46 +186,29 @@ export const Dashboard: React.FC = () => {
               <span className="text-sm text-indigo-600 font-semibold">Active PRs</span>
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs lg:text-sm text-slate-500 flex items-center gap-1.5 font-mono">
-            {ledgerBalanced === true ? (
-              <span className="text-emerald-700 flex items-center gap-1.5 font-semibold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> Ledger Balanced (Δ = ₹0.00)
-              </span>
-            ) : (
-              <span>Requisitions undergoing stage-gate approvals</span>
-            )}
-          </div>
+          {ledgerBalanced === true && (
+            <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Ledger Balanced</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Visual Component: Procurement Pipeline */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">
-            {recentPR ? `Latest Requisition Pipeline (${recentPR.pr_code})` : 'Active Procurement Pipeline Visualizer'}
-          </h3>
-          <Link
-            to="/procurement"
-            className="text-sm font-mono text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 font-medium focus:outline-none focus:underline"
-          >
-            Manage Pipeline <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-          </Link>
-        </div>
+        <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">
+          {recentPR ? `Latest Requisition Pipeline (${recentPR.pr_code})` : 'Active Procurement Pipeline Visualizer'}
+        </h3>
         <WorkflowTimeline currentStage={activeStage} amount={activeAmount} />
       </div>
 
       {/* Inventory Table */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-100">
           <h3 className="text-lg lg:text-xl font-semibold text-slate-900 tracking-tight">
             Warehouse Inventory Registry
           </h3>
-          <Link
-            to="/inventory"
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-mono flex items-center gap-1.5 font-medium"
-          >
-            View Master <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-          </Link>
         </div>
         <div className="overflow-x-auto w-full">
           <table className="w-full text-left text-sm">
@@ -278,11 +228,11 @@ export const Dashboard: React.FC = () => {
                   <td colSpan={6} className="py-10 text-center text-slate-400 font-mono text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-5 h-5 animate-spin text-indigo-600" />
-                      <span>Loading inventory records from PostgreSQL...</span>
+                      <span>Loading inventory records...</span>
                     </div>
                   </td>
                 </tr>
-              ) : inventory.length === 0 ? (
+              ) : displayInventory.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-14 text-center text-slate-500">
                     <div className="max-w-md mx-auto space-y-3">
@@ -301,7 +251,7 @@ export const Dashboard: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                inventory.map((item) => (
+                displayInventory.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors h-14">
                     <td className="py-4 px-6 font-mono font-medium text-indigo-600">{item.sku_code}</td>
                     <td className="py-4 px-6 font-medium text-slate-900">{item.name}</td>

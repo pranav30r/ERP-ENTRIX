@@ -8,7 +8,6 @@ import { useNav } from '../context/NavContext';
 export const Header: React.FC = () => {
   const { user, role, switchRole, loading: authLoading } = useAuth();
   const { toggleMobile } = useNav();
-  const [isConnected, setIsConnected] = useState(false);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
@@ -16,9 +15,6 @@ export const Header: React.FC = () => {
 
   useEffect(() => {
     const socket = getSocket();
-
-    const handleConnect = () => setIsConnected(true);
-    const handleDisconnect = () => setIsConnected(false);
 
     const handlePRCreated = (data: any) => {
       setNotifications((prev) => [data.message || `Requisition ${data.pr?.pr_code} created`, ...prev.slice(0, 9)]);
@@ -36,20 +32,12 @@ export const Header: React.FC = () => {
       setNotifications((prev) => [`Stock updated for SKU ${data.sku_code}: ${data.stock_qty} units`, ...prev.slice(0, 9)]);
     };
 
-    if (socket.connected) {
-      setIsConnected(true);
-    }
-
-    socket.on('connect', handleConnect);
-    socket.on('disconnect', handleDisconnect);
     socket.on('pr_created', handlePRCreated);
     socket.on('pr_status_changed', handlePRStatus);
     socket.on('grn_received', handleGRN);
     socket.on('inventory_updated', handleInv);
 
     return () => {
-      socket.off('connect', handleConnect);
-      socket.off('disconnect', handleDisconnect);
       socket.off('pr_created', handlePRCreated);
       socket.off('pr_status_changed', handlePRStatus);
       socket.off('grn_received', handleGRN);
@@ -115,20 +103,6 @@ export const Header: React.FC = () => {
 
       {/* Right User & Live Status Section */}
       <div className="flex items-center gap-3 sm:gap-5">
-        {/* Real-time Socket Indicator */}
-        <div
-          role="status"
-          aria-label={isConnected ? 'Live WebSocket telemetry active' : 'Telemetry polling active'}
-          className={`hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium transition-colors ${
-            isConnected
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : 'bg-amber-50 border-amber-200 text-amber-700'
-          }`}
-        >
-          <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} aria-hidden="true" />
-          <span className="font-mono text-xs">{isConnected ? 'Live Telemetry' : 'Telemetry Polling'}</span>
-        </div>
-
         {/* Real-time Notification Bell */}
         <div className="relative">
           <button

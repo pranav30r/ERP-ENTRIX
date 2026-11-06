@@ -27,19 +27,19 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { name: 'Procurement', path: '/procurement', icon: ShoppingBag, badge: 'Pipeline' },
+  { name: 'Procurement', path: '/procurement', icon: ShoppingBag },
   { name: 'Inventory Master', path: '/inventory', icon: Boxes },
   { name: 'Finance & Ledger', path: '/finance', icon: DollarSign, requiredRoles: ['SUPER_ADMIN', 'FINANCE_OFFICER'] },
   { name: 'Human Resources', path: '/hr', icon: Users, requiredRoles: ['SUPER_ADMIN', 'HR_MANAGER'] },
   { name: 'Project Milestones', path: '/projects', icon: FolderKanban, requiredRoles: ['SUPER_ADMIN', 'HR_MANAGER', 'FINANCE_OFFICER', 'PROCUREMENT_OFFICER'] },
-  { name: 'AI Decision Suite', path: '/ai-insights', icon: Sparkles, badge: 'ML', requiredRoles: ['SUPER_ADMIN', 'PROCUREMENT_OFFICER', 'FINANCE_OFFICER'] },
+  { name: 'AI Decision Suite', path: '/ai-insights', icon: Sparkles, requiredRoles: ['SUPER_ADMIN', 'PROCUREMENT_OFFICER', 'FINANCE_OFFICER'] },
   { name: 'Audit Logs', path: '/audit', icon: Activity, requiredRoles: ['SUPER_ADMIN', 'FINANCE_OFFICER', 'HR_MANAGER'] },
   { name: 'Organization', path: '/settings/company', icon: Building2 },
-  { name: 'Plans & Billing', path: '/settings/billing', icon: CreditCard, badge: 'SaaS' }
+  { name: 'Plans & Billing', path: '/settings/billing', icon: CreditCard }
 ];
 
 export const Sidebar: React.FC = () => {
-  const { role, hasRole, user } = useAuth();
+  const { hasRole } = useAuth();
   const { mobileOpen, setMobileOpen } = useNav();
 
   // Close mobile sidebar on Escape key press
@@ -82,9 +82,6 @@ export const Sidebar: React.FC = () => {
           <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase font-mono">
             Workspaces
           </span>
-          <span className="text-xs font-mono px-2 py-0.5 rounded bg-charcoal-800 text-indigo-400 border border-charcoal-700">
-            RBAC
-          </span>
         </div>
 
         {/* Nav Items */}
@@ -120,11 +117,6 @@ export const Sidebar: React.FC = () => {
                       <Lock className="w-3.5 h-3.5 text-slate-500" aria-label="Role restricted" />
                     </span>
                   )}
-                  {item.badge && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-charcoal-700 text-slate-200 font-mono">
-                      {item.badge}
-                    </span>
-                  )}
                 </div>
               </NavLink>
             );
@@ -132,21 +124,8 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Footer / Active Role Indicator */}
-      <div className="p-4 border-t border-charcoal-800/80 space-y-2">
-        <div className="p-3.5 bg-charcoal-850 rounded-xl border border-charcoal-800 text-xs">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs uppercase font-mono text-slate-400">Current Role</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          </div>
-          <div className="text-sm font-bold text-white font-mono truncate">
-            {role}
-          </div>
-          <div className="text-xs text-slate-400 truncate mt-0.5">
-            {user?.email || 'admin@entrix.local'}
-          </div>
-        </div>
-      </div>
+      {/* Footer Padding */}
+      <div className="p-4" />
     </div>
   );
 

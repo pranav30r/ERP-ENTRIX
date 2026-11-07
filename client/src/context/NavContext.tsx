@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
 interface NavContextType {
   mobileOpen: boolean;
@@ -13,11 +13,24 @@ const NavContext = createContext<NavContextType>({
 });
 
 export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const toggleMobile = () => setMobileOpen((prev) => !prev);
+  const [mobileOpen, setMobileOpenState] = useState(false);
+
+  const setMobileOpen = useCallback((open: boolean) => {
+    setMobileOpenState(open);
+  }, []);
+
+  const toggleMobile = useCallback(() => {
+    setMobileOpenState((prev) => !prev);
+  }, []);
+
+  const value = useMemo<NavContextType>(() => ({
+    mobileOpen,
+    setMobileOpen,
+    toggleMobile
+  }), [mobileOpen, setMobileOpen, toggleMobile]);
 
   return (
-    <NavContext.Provider value={{ mobileOpen, setMobileOpen, toggleMobile }}>
+    <NavContext.Provider value={value}>
       {children}
     </NavContext.Provider>
   );

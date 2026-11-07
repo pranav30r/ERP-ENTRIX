@@ -59,7 +59,7 @@ export const App = () => {
                     <Header />
 
                     {/* Page Body */}
-                    <main id="main-content" tabIndex={-1} className="p-6 md:p-8 xl:p-10 w-full max-w-[1920px] mx-auto focus:outline-none">
+                    <main id="main-content" tabIndex={-1} className="py-6 px-6 sm:px-6 md:px-8 xl:px-10 w-full max-w-[1600px] mx-auto focus:outline-none">
                       <ErrorBoundary>
                         <Suspense fallback={<LoadingFallback />}>
                           <Routes>

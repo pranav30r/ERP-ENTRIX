@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { loginAsUser } from '../services/api';
+import { clearAllCache } from '../hooks/useCachedFetch';
 
 export interface UserProfile {
   id?: string;
@@ -50,40 +51,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // ignore
       }
     }
-    return null;
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-
-  // Initialize session or default to SUPER_ADMIN
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const storedToken = localStorage.getItem('entrix_token');
-        const storedUser = localStorage.getItem('entrix_user');
-
-        if (storedToken && storedUser && storedUser !== 'undefined') {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-        } else {
-          // Default to demo admin persona
-          const loginData = await loginAsUser('admin@entrix.local', 'Admin@123');
-          setToken(loginData.access_token);
-          setUser(loginData.user);
-        }
-      } catch (err) {
-        console.warn('Authentication bootstrap fallback:', err);
-      } finally {
-        setLoading(false);
-      }
+    return {
+      email: 'admin@entrix.local',
+      first_name: 'Aditya',
+      last_name: 'Admin',
+      role: 'SUPER_ADMIN'
     };
+  });
+  const [loading, setLoading] = useState<boolean>(false);
 
-    initAuth();
-  }, []);
+  useEffect(() => {
+    if (!token) {
+      loginAsUser('admin@entrix.local', 'Admin@123')
+        .then((data) => {
+          setToken(data.access_token);
+          setUser(data.user);
+        })
+        .catch((err) => {
+          console.error('Initialization auth error:', err);
+        });
+    }
+  }, [token]);
 
-  const switchRole = async (email: string) => {
+  const switchRole = useCallback(async (email: string) => {
     setLoading(true);
     try {
       const data = await loginAsUser(email, 'Admin@123');
+      // Clear all in-memory query cache on persona / user / tenant switch
+      clearAllCache();
       setToken(data.access_token);
       setUser(data.user);
       localStorage.setItem('entrix_token', data.access_token);
@@ -94,26 +89,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const currentRole = user?.role || 'STAFF_USER';
 
-  const hasRole = (allowedRoles: string[]): boolean => {
+  const hasRole = useCallback((allowedRoles: string[]): boolean => {
     if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
     return allowedRoles.includes(user.role);
-  };
+  }, [user]);
 
-  const canAccessWorkspace = (path: string): boolean => {
+  const canAccessWorkspace = useCallback((path: string): boolean => {
     if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
 
     switch (path) {
       case '/':
       case '/procurement':
-        return true; // All roles can see dashboard and submit or view PRs
+        return true;
       case '/inventory':
-        return true; // All can view inventory; adjustments restricted inside page
+        return true;
       case '/ai-insights':
         return ['SUPER_ADMIN', 'PROCUREMENT_OFFICER', 'FINANCE_OFFICER'].includes(user.role);
       case '/finance':
@@ -127,21 +122,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       default:
         return true;
     }
-  };
+  }, [user]);
+
+  const value = useMemo<AuthContextType>(() => ({
+    user,
+    role: currentRole,
+    token,
+    isAuthenticated: !!token,
+    loading,
+    switchRole,
+    hasRole,
+    canAccessWorkspace
+  }), [user, currentRole, token, loading, switchRole, hasRole, canAccessWorkspace]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role: currentRole,
-        token,
-        isAuthenticated: !!token,
-        loading,
-        switchRole,
-        hasRole,
-        canAccessWorkspace
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

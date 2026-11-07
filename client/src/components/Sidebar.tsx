@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
+import { prefetchRoute } from '../lib/routePrefetch';
 
 interface NavItem {
   name: string;
@@ -58,7 +59,7 @@ export const Sidebar: React.FC = () => {
     <div className="flex flex-col justify-between h-full">
       <div>
         {/* Brand Header */}
-        <div className="h-[68px] lg:h-[72px] flex items-center justify-between px-6 border-b border-charcoal-800/80">
+        <div className="h-14 lg:h-16 flex items-center justify-between px-6 border-b border-charcoal-800/80">
           <div className="flex items-center gap-3.5">
             <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-sm shadow-indigo-500/30">
               E
@@ -97,6 +98,8 @@ export const Sidebar: React.FC = () => {
                 key={item.name}
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
+                onMouseEnter={() => prefetchRoute(item.path)}
+                onFocus={() => prefetchRoute(item.path)}
                 aria-current={isActive ? 'page' : undefined}
                 className={({ isActive: linkActive }) => `
                   group flex items-center justify-between px-3.5 h-11 rounded-lg text-sm xl:text-[15px] font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500

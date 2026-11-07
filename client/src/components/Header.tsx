@@ -105,16 +105,16 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-[68px] lg:h-[72px] bg-white border-b border-slate-200 px-6 sm:px-8 xl:px-10 flex items-center justify-between sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+    <header className="h-16 bg-white border-b border-slate-200 px-6 sm:px-6 md:px-8 xl:px-10 flex items-center justify-between sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       {/* Left: Mobile hamburger & Search Input */}
       <div className="flex items-center gap-3.5 max-w-lg w-full">
         {/* Mobile menu toggle */}
         <button
           onClick={toggleMobile}
           aria-label="Open mobile navigation menu"
-          className="lg:hidden p-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="lg:hidden p-2.5 min-w-[40px] min-h-[40px] rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
-          <Menu className="w-6 h-6" aria-hidden="true" />
+          <Menu className="w-5 h-5 text-slate-700" aria-hidden="true" />
         </button>
 
         <div className="relative w-full">
@@ -124,9 +124,9 @@ export const Header: React.FC = () => {
             type="search"
             aria-label="Search workspace entities (Press Ctrl+K or Cmd+K to focus)"
             placeholder="Search SKU, requisition ID, ledger entries..."
-            className="w-full h-11 pl-11 pr-14 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
+            className="w-full h-11 min-h-[44px] pl-11 pr-16 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
           />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[11px] font-mono text-slate-400 bg-white border border-slate-200 rounded shadow-xs">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-xs font-mono text-slate-500 bg-white border border-slate-200 rounded shadow-xs">
             {typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? '⌘ K' : 'Ctrl K'}
           </kbd>
         </div>
@@ -140,10 +140,10 @@ export const Header: React.FC = () => {
             tabIndex={0}
             role="status"
             aria-label={socketConnected ? 'Live data connected' : 'Connecting to live telemetry'}
-            className="flex items-center justify-center p-2 rounded-lg hover:bg-slate-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="flex items-center justify-center p-2.5 min-w-[40px] min-h-[40px] rounded-lg hover:bg-slate-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <span
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+              className={`w-3 h-3 rounded-full transition-colors ${
                 socketConnected ? 'bg-emerald-500 shadow-xs shadow-emerald-500/50 animate-pulse' : 'bg-amber-400'
               }`}
             />
@@ -156,7 +156,7 @@ export const Header: React.FC = () => {
             onClick={() => setShowNotifications(!showNotifications)}
             aria-label={`Real-time events (${notifications.length} notifications)`}
             aria-expanded={showNotifications}
-            className="relative p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="relative p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <Bell className="w-5 h-5" aria-hidden="true" />
             {notifications.length > 0 && (
@@ -216,7 +216,7 @@ export const Header: React.FC = () => {
                 {user?.email || 'admin@entrix.local'}
               </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-400 ml-1" aria-hidden="true" />
+            <ChevronDown className="w-5 h-5 text-slate-400 ml-1" aria-hidden="true" />
           </button>
 
           {showRoleSwitcher && (
@@ -228,7 +228,7 @@ export const Header: React.FC = () => {
               {/* Current Active Persona Summary */}
               <div className="px-4 py-3 bg-slate-50/70 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-900">
+                  <span className="text-sm font-semibold text-slate-900">
                     {user ? `${user.first_name} ${user.last_name}` : 'Aditya Admin'}
                   </span>
                   <StatusPill variant="neutral" size="sm">
@@ -240,10 +240,10 @@ export const Header: React.FC = () => {
 
               <div className="px-4 py-2 bg-slate-50/30">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] uppercase font-mono font-bold text-slate-500">Switch Demo Persona</span>
+                  <span className="text-xs uppercase font-mono font-bold text-slate-500">Switch Demo Persona</span>
                   <span className="text-xs text-indigo-600 font-medium">RBAC Simulator</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">Switch role to test live security and permission bounds</p>
+                <p className="text-xs text-slate-500 mt-0.5">Switch role to test live security and permission bounds</p>
               </div>
 
               <div className="py-1">

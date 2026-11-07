@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Skeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
 import { FileQuestion, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -34,6 +34,52 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
+interface DataTableRowProps<T> {
+  row: T;
+  index: number;
+  columns: Column<T>[];
+  onRowClick?: (row: T) => void;
+  rowClassName?: (row: T, index: number) => string;
+  getResponsiveClass: (col: Column<T>) => string;
+}
+
+function DataTableRowComponent<T>({
+  row,
+  index,
+  columns,
+  onRowClick,
+  rowClassName,
+  getResponsiveClass,
+}: DataTableRowProps<T>) {
+  return (
+    <tr
+      onClick={() => onRowClick && onRowClick(row)}
+      className={`min-h-[48px] h-12 text-[14px] leading-normal transition-colors duration-150 ${
+        rowClassName ? rowClassName(row, index) : ''
+      } ${onRowClick ? 'cursor-pointer hover:bg-surface-2/70' : 'hover:bg-surface-2/40'}`}
+    >
+      {columns.map((col) => {
+        const isNumeric = col.numeric || col.align === 'right';
+        const isCenter = col.align === 'center';
+        const cellContent = col.render ? col.render(row) : (row as Record<string, any>)[col.key];
+
+        return (
+          <td
+            key={col.key}
+            className={`px-4 py-3 text-[14px] ${
+              isNumeric ? 'text-right font-mono tabular-nums' : isCenter ? 'text-center' : 'text-left font-sans'
+            } ${getResponsiveClass(col)}`}
+          >
+            {cellContent}
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+const MemoizedDataTableRow = memo(DataTableRowComponent) as typeof DataTableRowComponent;
+
 export function DataTable<T>({
   columns,
   rows,
@@ -52,23 +98,24 @@ export function DataTable<T>({
     return '';
   };
 
-  const totalPages = pagination ? Math.ceil(pagination.total / pagination.pageSize) : 1;
+  const totalPages = pagination ? Math.max(1, Math.ceil(pagination.total / pagination.pageSize)) : 1;
 
   return (
-    <div className={`w-full bg-surface border border-border rounded-lg shadow-card overflow-hidden ${className}`}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs border-collapse">
-          <thead className="sticky top-0 bg-surface-2 border-b border-border z-10">
+    <div className={`w-full overflow-hidden rounded-xl border border-border bg-surface shadow-card ${className}`}>
+      <div className="overflow-x-auto w-full">
+        <table className="w-full text-left text-[14px] border-collapse">
+          <thead className="bg-surface-2 border-b border-border text-muted font-mono text-[12px] uppercase tracking-wider sticky top-0 z-10 select-none">
             <tr>
               {columns.map((col) => {
                 const isNumeric = col.numeric || col.align === 'right';
                 const isCenter = col.align === 'center';
+
                 return (
                   <th
                     key={col.key}
                     scope="col"
                     style={{ width: col.width }}
-                    className={`h-11 px-4 text-[11px] font-semibold text-muted uppercase tracking-wide font-sans select-none ${
+                    className={`h-12 px-4 py-3 font-semibold text-[12px] tracking-wide uppercase ${
                       isNumeric ? 'text-right' : isCenter ? 'text-center' : 'text-left'
                     } ${getResponsiveClass(col)}`}
                   >
@@ -97,30 +144,15 @@ export function DataTable<T>({
               </tr>
             ) : (
               rows.map((row, idx) => (
-                <tr
+                <MemoizedDataTableRow
                   key={rowKey(row)}
-                  onClick={() => onRowClick && onRowClick(row)}
-                  className={`h-11 min-h-[44px] transition-colors ${
-                    rowClassName ? rowClassName(row, idx) : ''
-                  } ${onRowClick ? 'cursor-pointer hover:bg-surface-2/70' : 'hover:bg-surface-2/40'}`}
-                >
-                  {columns.map((col) => {
-                    const isNumeric = col.numeric || col.align === 'right';
-                    const isCenter = col.align === 'center';
-                    const cellContent = col.render ? col.render(row) : (row as Record<string, any>)[col.key];
-
-                    return (
-                      <td
-                        key={col.key}
-                        className={`h-11 px-4 text-xs ${
-                          isNumeric ? 'text-right font-mono tabular-nums' : isCenter ? 'text-center' : 'text-left font-sans'
-                        } ${getResponsiveClass(col)}`}
-                      >
-                        {cellContent}
-                      </td>
-                    );
-                  })}
-                </tr>
+                  row={row}
+                  index={idx}
+                  columns={columns}
+                  onRowClick={onRowClick}
+                  rowClassName={rowClassName}
+                  getResponsiveClass={getResponsiveClass}
+                />
               ))
             )}
           </tbody>
@@ -149,52 +181,52 @@ export function DataTable<T>({
             </span>{' '}
             of <span className="font-semibold text-text font-mono">{pagination.total}</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {pagination.showJumps && (
               <button
                 type="button"
                 disabled={pagination.page <= 1}
                 onClick={() => pagination.onPageChange(1)}
-                className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 aria-label="First Page"
                 title="First Page"
               >
-                <ChevronsLeft className="w-4 h-4" />
+                <ChevronsLeft className="w-5 h-5" />
               </button>
             )}
             <button
               type="button"
               disabled={pagination.page <= 1}
               onClick={() => pagination.onPageChange(pagination.page - 1)}
-              className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               aria-label="Previous Page"
               title="Previous Page"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className="px-2 font-medium text-text">
-              Page {pagination.page} of {Math.max(1, totalPages)}
+            <span className="px-3 py-1 text-text font-mono font-medium text-sm">
+              Page {pagination.page} of {totalPages}
             </span>
             <button
               type="button"
               disabled={pagination.page >= totalPages}
               onClick={() => pagination.onPageChange(pagination.page + 1)}
-              className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               aria-label="Next Page"
               title="Next Page"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
             {pagination.showJumps && (
               <button
                 type="button"
                 disabled={pagination.page >= totalPages}
                 onClick={() => pagination.onPageChange(totalPages)}
-                className="p-1.5 rounded border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-border text-slate-600 hover:bg-surface-2 disabled:opacity-40 disabled:pointer-events-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 aria-label="Last Page"
                 title="Last Page"
               >
-                <ChevronsRight className="w-4 h-4" />
+                <ChevronsRight className="w-5 h-5" />
               </button>
             )}
           </div>
@@ -203,5 +235,3 @@ export function DataTable<T>({
     </div>
   );
 }
-
-export default DataTable;

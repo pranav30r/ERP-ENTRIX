@@ -46,13 +46,13 @@ const variantStyles: Record<StatusPillVariant, { bg: string; text: string; dotCo
 
 const sizeStyles: Record<StatusPillSize, { padding: string; text: string; dotSize: string }> = {
   sm: {
-    padding: 'px-2 py-0.5',
-    text: 'text-xs',
-    dotSize: 'w-1.5 h-1.5',
+    padding: 'px-2.5 py-0.5',
+    text: 'text-[13px] leading-tight',
+    dotSize: 'w-2 h-2',
   },
   md: {
-    padding: 'px-2.5 py-1',
-    text: 'text-xs',
+    padding: 'px-3 py-1',
+    text: 'text-[13px] leading-normal',
     dotSize: 'w-2 h-2',
   },
 };

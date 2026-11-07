@@ -25,7 +25,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     },
     ref
   ) => {
-    const sizeClasses = size === 'sm' ? 'w-8 h-8 min-w-[32px] min-h-[32px]' : 'w-9 h-9 min-w-[36px] min-h-[36px]';
+    const sizeClasses = size === 'sm' ? 'w-10 h-10 min-w-[40px] min-h-[40px]' : 'w-11 h-11 min-w-[44px] min-h-[44px]';
 
     const variantClasses =
       variant === 'danger'
@@ -41,7 +41,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         className={`inline-flex items-center justify-center rounded-lg border border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-40 disabled:pointer-events-none select-none ${sizeClasses} ${variantClasses} ${className}`}
         {...props}
       >
-        <Icon className={`w-4 h-4 shrink-0 ${loading ? 'animate-spin' : ''}`} />
+        <Icon className={`w-5 h-5 shrink-0 ${loading ? 'animate-spin' : ''}`} />
       </button>
     );
 

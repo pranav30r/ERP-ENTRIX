@@ -11,12 +11,14 @@ import { TestDataToggle } from '../components/ui/TestDataToggle';
 import { useTestDataToggle } from '../hooks/useTestDataToggle';
 import { isTestRecord } from '../lib/testData';
 import { formatCurrency, formatDate } from '../lib/format';
+import { useDebounce } from '../hooks/useDebounce';
 
 export const HR: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'employees' | 'attendance'>('employees');
   const [employees, setEmployees] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [attendanceDate, setAttendanceDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(true);
   const [forbiddenError, setForbiddenError] = useState<string | null>(null);
@@ -61,18 +63,18 @@ export const HR: React.FC = () => {
       if (!showTestData && (isTestRecord(emp.employee_code) || isTestRecord(emp.user?.email || ''))) {
         return false;
       }
-      const matchesSearch = !search || 
-        emp.employee_code?.toLowerCase().includes(search.toLowerCase()) ||
-        emp.designation?.toLowerCase().includes(search.toLowerCase()) ||
-        (emp.user && `${emp.user.first_name} ${emp.user.last_name}`.toLowerCase().includes(search.toLowerCase())) ||
-        (emp.user?.email?.toLowerCase().includes(search.toLowerCase()));
+      const matchesSearch = !debouncedSearch || 
+        emp.employee_code?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        emp.designation?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        (emp.user && `${emp.user.first_name} ${emp.user.last_name}`.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
+        (emp.user?.email?.toLowerCase().includes(debouncedSearch.toLowerCase()));
 
       const dept = emp.department?.name || emp.designation;
       const matchesDept = selectedDept === 'All' || dept === selectedDept;
 
       return matchesSearch && matchesDept;
     });
-  }, [employees, search, selectedDept, showTestData]);
+  }, [employees, debouncedSearch, selectedDept, showTestData]);
 
   const paginatedEmployees = useMemo(() => {
     const start = (empPage - 1) * pageSize;

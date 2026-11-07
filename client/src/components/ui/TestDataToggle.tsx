@@ -28,8 +28,8 @@ export const TestDataToggle: React.FC<TestDataToggleProps> = ({
       </label>
       <span className="text-slate-600 font-medium">Show test data</span>
       {!showTestData && hiddenCount > 0 && (
-        <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full font-mono">
-          <Filter className="w-3 h-3" />
+        <span className="inline-flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full font-mono">
+          <Filter className="w-3.5 h-3.5" />
           {hiddenCount} hidden
         </span>
       )}

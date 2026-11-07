@@ -12,6 +12,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { TestDataToggle } from '../components/ui/TestDataToggle';
 import { useTestDataToggle } from '../hooks/useTestDataToggle';
 import { isTestRecord } from '../lib/testData';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface CompanyProfile {
   id: string;
@@ -74,6 +75,7 @@ export const CompanySettings: React.FC = () => {
 
   const { showTestData, toggle: toggleTestData } = useTestDataToggle();
   const [memberSearch, setMemberSearch] = useState('');
+  const debouncedMemberSearch = useDebounce(memberSearch, 300);
   const [selectedRole, setSelectedRole] = useState<string>('All');
   const [memberPage, setMemberPage] = useState(1);
   const pageSize = 25;
@@ -97,16 +99,16 @@ export const CompanySettings: React.FC = () => {
         return false;
       }
       const fullName = `${m.first_name} ${m.last_name}`.toLowerCase();
-      const matchesSearch = !memberSearch ||
-        fullName.includes(memberSearch.toLowerCase()) ||
-        m.email.toLowerCase().includes(memberSearch.toLowerCase());
+      const matchesSearch = !debouncedMemberSearch ||
+        fullName.includes(debouncedMemberSearch.toLowerCase()) ||
+        m.email.toLowerCase().includes(debouncedMemberSearch.toLowerCase());
 
       const r = m.role?.name || `Role #${m.role_id}`;
       const matchesRole = selectedRole === 'All' || r === selectedRole;
 
       return matchesSearch && matchesRole;
     });
-  }, [members, showTestData, memberSearch, selectedRole]);
+  }, [members, showTestData, debouncedMemberSearch, selectedRole]);
 
   const paginatedMembers = useMemo(() => {
     const start = (memberPage - 1) * pageSize;
@@ -115,7 +117,7 @@ export const CompanySettings: React.FC = () => {
 
   useEffect(() => {
     setMemberPage(1);
-  }, [memberSearch, selectedRole, showTestData]);
+  }, [debouncedMemberSearch, selectedRole, showTestData]);
 
   const handleConfirmDeactivate = async () => {
     if (!memberToDeactivate) return;

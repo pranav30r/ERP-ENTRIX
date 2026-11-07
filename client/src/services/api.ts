@@ -1,7 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, CanceledError } from 'axios';
 
 export const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 export const AI_BASE_URL = (import.meta as any).env?.VITE_AI_BASE_URL || 'http://localhost:8008/api/v1/ml';
+
+export { CanceledError };
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -18,6 +20,30 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// In-flight GET request deduplication
+const inFlightRequests = new Map<string, Promise<any>>();
+
+function getRequestKey(url: string, params?: any): string {
+  return `GET:${url}:${params ? JSON.stringify(params) : ''}`;
+}
+
+const originalGet = apiClient.get.bind(apiClient);
+apiClient.get = ((url: string, config?: AxiosRequestConfig) => {
+  const key = getRequestKey(url, config?.params);
+  if (!config?.signal && inFlightRequests.has(key)) {
+    return inFlightRequests.get(key);
+  }
+
+  const promise = originalGet(url, config).finally(() => {
+    inFlightRequests.delete(key);
+  });
+
+  if (!config?.signal) {
+    inFlightRequests.set(key, promise);
+  }
+  return promise;
+}) as typeof apiClient.get;
 
 export const getCurrentUser = () => {
   const raw = localStorage.getItem('entrix_user');
@@ -112,26 +138,3 @@ export const ensureAuthenticated = async (): Promise<string> => {
   }
   return token || '';
 };
-
-// Auto-refresh and retry on 401
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const refreshedToken = await refreshSession();
-      if (refreshedToken) {
-        originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
-        return apiClient(originalRequest);
-      }
-      // Fallback auto-auth for demo persona
-      const fallbackToken = await ensureAuthenticated();
-      if (fallbackToken) {
-        originalRequest.headers.Authorization = `Bearer ${fallbackToken}`;
-        return apiClient(originalRequest);
-      }
-    }
-    return Promise.reject(error);
-  }
-);

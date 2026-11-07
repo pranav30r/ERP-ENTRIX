@@ -25,8 +25,9 @@ import { TestDataToggle } from '../components/ui/TestDataToggle';
 import { useTestDataToggle } from '../hooks/useTestDataToggle';
 import { isTestRecord } from '../lib/testData';
 import { formatCurrency, formatNumber } from '../lib/format';
-import { apiClient, ensureAuthenticated } from '../services/api';
+import { apiClient, ensureAuthenticated, CanceledError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface InventoryItem {
   id: string;
@@ -46,6 +47,7 @@ export const Inventory: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [sortBy, setSortBy] = useState<'name-asc' | 'price-desc' | 'stock-asc'>('name-asc');
   const [lowStockOnly, setLowStockOnly] = useState(false);
@@ -75,15 +77,18 @@ export const Inventory: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const fetchInventory = async () => {
+  const fetchInventory = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       await ensureAuthenticated();
-      const res = await apiClient.get('/inventory');
+      const res = await apiClient.get('/inventory', { signal });
       if (res.data.success && Array.isArray(res.data.data)) {
         setItems(res.data.data);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err instanceof CanceledError || err?.name === 'CanceledError') {
+        return;
+      }
       console.error('Failed to load inventory from API:', err);
     } finally {
       setLoading(false);
@@ -91,13 +96,15 @@ export const Inventory: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchInventory();
+    const controller = new AbortController();
+    fetchInventory(controller.signal);
+    return () => controller.abort();
   }, []);
 
   // Reset page to 1 when filters or sort change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, selectedCategory, sortBy, lowStockOnly, showTestData]);
+  }, [debouncedSearchQuery, selectedCategory, sortBy, lowStockOnly, showTestData]);
 
   const hiddenTestCount = useMemo(() => {
     return items.filter(item => isTestRecord(item.sku_code) || isTestRecord(item.name)).length;
@@ -108,8 +115,8 @@ export const Inventory: React.FC = () => {
       if (!showTestData && (isTestRecord(item.sku_code) || isTestRecord(item.name))) {
         return false;
       }
-      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            item.sku_code.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = item.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
+                            item.sku_code.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
       const matchesLowStock = !lowStockOnly || (Number(item.stock_qty) <= Number(item.safety_stock));
       return matchesSearch && matchesCategory && matchesLowStock;
@@ -125,7 +132,7 @@ export const Inventory: React.FC = () => {
       }
       return 0;
     });
-  }, [items, showTestData, searchQuery, selectedCategory, lowStockOnly, sortBy]);
+  }, [items, showTestData, debouncedSearchQuery, selectedCategory, lowStockOnly, sortBy]);
 
   const totalSKUs = items.length;
   const totalValuation = items.reduce((acc, curr) => acc + (Number(curr.stock_qty) * Number(curr.unit_price)), 0);
@@ -205,7 +212,7 @@ export const Inventory: React.FC = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={fetchInventory}
+              onClick={() => fetchInventory()}
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

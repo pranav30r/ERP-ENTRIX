@@ -23,7 +23,32 @@
 
 @layer base {
   body {
-    @apply bg-bg text-text font-sans antialiased;
+    @apply bg-bg text-text font-sans antialiased text-base leading-relaxed;
+  }
+
+  p {
+    @apply text-base text-slate-600;
+  }
+
+  /* Accessible focus ring on all interactive elements */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--bg)), 0 0 0 4px rgb(var(--brand));
+  }
+}
+
+/* Micro-interaction transition defaults */
+button, a, input, select, textarea, tr, .transition-colors, .transition-all {
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

@@ -18,8 +18,20 @@ describe('Procurement State Machine & Approval Pipeline', () => {
       });
     adminToken = authRes.body.access_token;
 
-    // Fetch an inventory item for requisition
-    testItem = await InventoryItem.findOne();
+    // Fetch an inventory item for requisition (fallback to create if db was wiped)
+    testItem = await InventoryItem.findOne({ where: { tenant_id: '00000000-0000-0000-0000-000000000001' } });
+    if (!testItem) {
+      testItem = await InventoryItem.create({
+        tenant_id: '00000000-0000-0000-0000-000000000001',
+        sku_code: `SKU-TEST-PROC-${Date.now()}`,
+        name: 'Procurement Test Steel',
+        category: 'Raw Materials',
+        unit_of_measure: 'KG',
+        unit_price: 65.50,
+        stock_qty: 500,
+        safety_stock: 50
+      });
+    }
   });
 
   afterAll(async () => {

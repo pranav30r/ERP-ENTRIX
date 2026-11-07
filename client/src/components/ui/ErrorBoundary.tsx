@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <div className="flex justify-center gap-3 pt-2">
             <Button variant="primary" size="sm" onClick={this.handleReset}>
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+              <RotateCcw className="w-5 h-5 mr-2" aria-hidden="true" />
               Reload Workspace
             </Button>
           </div>

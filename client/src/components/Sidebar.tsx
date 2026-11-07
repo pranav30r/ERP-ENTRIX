@@ -120,7 +120,7 @@ export const Sidebar: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {!isAuthorized && (
                     <span title={`Requires ${item.requiredRoles?.join(' or ')}`}>
-                      <Lock className="w-3.5 h-3.5 text-slate-500" aria-label="Role restricted" />
+                      <Lock className="w-4 h-4 text-slate-500" aria-label="Role restricted" />
                     </span>
                   )}
                 </div>

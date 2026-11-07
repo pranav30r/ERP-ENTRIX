@@ -203,7 +203,7 @@ export const Header: React.FC = () => {
           >
             <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
               {switching ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-label="Switching" />
+                <Loader2 className="w-5 h-5 animate-spin" aria-label="Switching" />
               ) : (
                 user ? `${user.first_name?.[0] || 'A'}${user.last_name?.[0] || ''}` : 'A'
               )}
@@ -276,9 +276,9 @@ export const Header: React.FC = () => {
                 <Link
                   to="/register"
                   onClick={() => setShowRoleSwitcher(false)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/60 transition-colors"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                  <Sparkles className="w-5 h-5 text-indigo-500" />
                   <span>Onboard New Tenant Company</span>
                 </Link>
               </div>

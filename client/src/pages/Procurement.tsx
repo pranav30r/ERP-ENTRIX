@@ -561,52 +561,52 @@ export const Procurement: React.FC = () => {
         <div className="space-y-6 lg:space-y-8">
           {/* Telemetry Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
               <div>
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono block">
                   Total Invoices
                 </span>
-                <p className="text-3xl lg:text-4xl font-bold font-mono text-slate-900 mt-3">{invoices.length}</p>
+                <p className="text-3xl lg:text-4xl font-bold font-mono tabular-nums text-slate-900 mt-3">{invoices.length}</p>
               </div>
-              <span className="text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100 font-mono block">Audit logged & tenant isolated</span>
+              <span className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 font-mono block">Audit logged & tenant isolated</span>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
               <div>
                 <span className="text-xs font-semibold text-cyan-700 uppercase tracking-wider font-mono block">
                   Matched & Payable
                 </span>
-                <p className="text-3xl lg:text-4xl font-bold font-mono text-cyan-900 mt-3">
+                <p className="text-3xl lg:text-4xl font-bold font-mono tabular-nums text-cyan-900 mt-3">
                   ₹{totalPayableMatched.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <span className="text-xs text-cyan-600 mt-3 pt-3 border-t border-slate-100 font-mono block">
+              <span className="text-xs text-cyan-700 mt-3 pt-3 border-t border-slate-100 font-mono block">
                 {matchedPendingInvoices.length} invoices ready for payment
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
               <div>
                 <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider font-mono block">
                   Settled & Paid
                 </span>
-                <p className="text-3xl lg:text-4xl font-bold font-mono text-emerald-900 mt-3">
+                <p className="text-3xl lg:text-4xl font-bold font-mono tabular-nums text-emerald-900 mt-3">
                   ₹{totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <span className="text-xs text-emerald-600 mt-3 pt-3 border-t border-slate-100 font-mono block">
+              <span className="text-xs text-emerald-700 mt-3 pt-3 border-t border-slate-100 font-mono block">
                 {paidInvoices.length} ledger-balanced disbursements
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 xl:p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
               <div>
                 <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider font-mono block">
                   Discrepancies
                 </span>
-                <p className="text-3xl lg:text-4xl font-bold font-mono text-rose-900 mt-3">{discrepancyInvoices.length}</p>
+                <p className="text-3xl lg:text-4xl font-bold font-mono tabular-nums text-rose-900 mt-3">{discrepancyInvoices.length}</p>
               </div>
-              <span className="text-xs text-rose-600 mt-3 pt-3 border-t border-slate-100 font-mono block">Blocked from settlement</span>
+              <span className="text-xs text-rose-700 mt-3 pt-3 border-t border-slate-100 font-mono block">Blocked from settlement</span>
             </div>
           </div>
 

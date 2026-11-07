@@ -193,37 +193,37 @@ export const Finance: React.FC = () => {
           <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
             403
           </div>
-          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
-          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
-          <span className="text-[11px] text-slate-400 block">Switch to Finance Officer or Super Admin in the top-right header to view ledgers.</span>
+          <h3 className="text-base font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-xs text-slate-500 block">Switch to Finance Officer or Super Admin in the top-right header to view ledgers.</span>
         </div>
       ) : activeTab === 'LEDGER' ? (
         <>
           {/* Stat Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
-              <div className="flex items-center justify-between text-xs text-muted mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span>Total Debits Posted</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-surface border border-border rounded-2xl p-6 shadow-card hover:border-slate-300 transition-all">
+              <div className="flex items-center justify-between text-xs font-semibold text-muted mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="uppercase tracking-wider">Total Debits Posted</span>
                   <Tooltip content="Source: PostgreSQL ledger">
-                    <Info className="w-3.5 h-3.5 text-muted cursor-pointer" aria-label="Debits source info" />
+                    <Info className="w-4 h-4 text-muted cursor-pointer" aria-label="Debits source info" />
                   </Tooltip>
                 </div>
               </div>
-              <div className="text-3xl font-bold text-text font-mono">
+              <div className="text-3xl font-bold text-text font-mono tabular-nums mt-3">
                 ₹{summary.total_debits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
-            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
-              <div className="flex items-center justify-between text-xs text-muted mb-1">
-                <div className="flex items-center gap-1.5">
-                  <span>Total Credits Posted</span>
+            <div className="bg-surface border border-border rounded-2xl p-6 shadow-card hover:border-slate-300 transition-all">
+              <div className="flex items-center justify-between text-xs font-semibold text-muted mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="uppercase tracking-wider">Total Credits Posted</span>
                   <Tooltip content="Source: PostgreSQL ledger">
-                    <Info className="w-3.5 h-3.5 text-muted cursor-pointer" aria-label="Credits source info" />
+                    <Info className="w-4 h-4 text-muted cursor-pointer" aria-label="Credits source info" />
                   </Tooltip>
                 </div>
               </div>
-              <div className="text-3xl font-bold text-text font-mono">
+              <div className="text-3xl font-bold text-text font-mono tabular-nums mt-3">
                 ₹{summary.total_credits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
             </div>
@@ -342,35 +342,35 @@ export const Finance: React.FC = () => {
           </div>
 
           {/* 3 AR Stat Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-surface border border-border rounded-2xl p-6 shadow-card hover:border-slate-300 transition-all">
               <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Total Billed (Dr 1100)
               </div>
-              <div className="text-2xl font-bold text-text font-mono">
+              <div className="text-2xl sm:text-3xl font-bold text-text font-mono tabular-nums mt-3">
                 ₹{Number(arSummary.total_invoiced).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
-              <div className="mt-2 text-xs text-slate-400">Sales Invoices Issued</div>
+              <div className="mt-2 text-xs text-slate-500 font-medium">Sales Invoices Issued</div>
             </div>
 
-            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+            <div className="bg-surface border border-border rounded-2xl p-6 shadow-card hover:border-slate-300 transition-all">
               <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Total Collected (Cr 1100)
               </div>
-              <div className="text-2xl font-bold text-emerald-600 font-mono">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600 font-mono tabular-nums mt-3">
                 ₹{Number(arSummary.total_collected).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
-              <div className="mt-2 text-xs text-slate-400">Cash Received in Bank</div>
+              <div className="mt-2 text-xs text-slate-500 font-medium">Cash Received in Bank</div>
             </div>
 
-            <div className="bg-surface border border-border rounded-lg p-5 shadow-card">
+            <div className="bg-surface border border-border rounded-2xl p-6 shadow-card hover:border-slate-300 transition-all">
               <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1">
                 Outstanding Balance
               </div>
-              <div className="text-2xl font-bold text-indigo-600 font-mono">
+              <div className="text-2xl sm:text-3xl font-bold text-indigo-600 font-mono tabular-nums mt-3">
                 ₹{Number(arSummary.outstanding_balance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </div>
-              <div className="mt-2 text-xs text-slate-400">Net Pending Collections</div>
+              <div className="mt-2 text-xs text-slate-500 font-medium">Net Pending Collections</div>
             </div>
           </div>
 

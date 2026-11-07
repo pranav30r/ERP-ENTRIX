@@ -249,51 +249,51 @@ export const Inventory: React.FC = () => {
 
       {/* Metrics Cards (4-column grid with gap-6) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Tracked SKUs</span>
             <Boxes className="w-6 h-6 text-indigo-500" />
           </div>
           <div className="mt-4 flex items-baseline gap-2.5">
-            <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">{totalSKUs}</span>
+            <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono tabular-nums">{totalSKUs}</span>
             <span className="text-sm font-semibold text-emerald-600">Active SKUs</span>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-mono">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-mono">
             Warehouse perpetual count
           </div>
         </div>
 
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Inventory Valuation</span>
             <DollarSign className="w-6 h-6 text-emerald-500" />
           </div>
           <div className="mt-4 flex items-baseline gap-2.5">
-            <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">
+            <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono tabular-nums">
               ₹{totalValuation.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </span>
-            <span className="text-xs text-slate-400 font-mono">Weighted Avg</span>
+            <span className="text-xs text-slate-500 font-mono">Weighted Avg</span>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-mono">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-mono">
             Balance sheet asset value
           </div>
         </div>
 
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Reorder Triggers</span>
             <AlertTriangle className="w-6 h-6 text-amber-500" />
           </div>
           <div className="mt-4 flex items-baseline gap-2.5">
-            <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono">{lowStockAlerts}</span>
+            <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono tabular-nums">{lowStockAlerts}</span>
             <span className="text-sm font-semibold text-amber-700">Under threshold</span>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-mono">
+          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-mono">
             stock_qty &le; safety_stock
           </div>
         </div>
 
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider font-mono text-slate-500">Database</span>
             <Layers className="w-6 h-6 text-blue-500" />
@@ -301,14 +301,14 @@ export const Inventory: React.FC = () => {
           <div className="mt-4 flex items-baseline gap-2.5">
             <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">Online</span>
             <Tooltip content="PostgreSQL 16 · ACID transaction isolation">
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500 cursor-pointer">
+              <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
                 <span>v16</span>
-                <Info className="w-3 h-3 text-slate-400" />
+                <Info className="w-4 h-4 text-slate-400" />
               </span>
             </Tooltip>
           </div>
-          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400 font-mono">
-            Relational storage engine
+          <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 font-mono">
+            ACID Isolation Level Verified
           </div>
         </div>
       </div>

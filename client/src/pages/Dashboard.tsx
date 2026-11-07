@@ -116,68 +116,68 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Quick Operations Action Bar */}
-      <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
         <Link
           to="/procurement"
-          className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm transition-colors shadow-sm shadow-indigo-500/20"
+          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-colors shadow-sm shadow-indigo-500/20"
         >
-          <Plus className="w-4 h-4" /> New Requisition
+          <Plus className="w-5 h-5" /> New Requisition
         </Link>
         <Link
           to="/inventory"
-          className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-medium text-sm transition-colors"
+          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition-colors"
         >
-          <Package className="w-4 h-4 text-slate-500" /> Inventory Master
+          <Package className="w-5 h-5 text-slate-500" /> Inventory Master
         </Link>
         <Link
           to="/procurement"
-          className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-medium text-sm transition-colors"
+          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition-colors"
         >
-          <FileCheck2 className="w-4 h-4 text-slate-500" /> Match Invoice
+          <FileCheck2 className="w-5 h-5 text-slate-500" /> Match Invoice
         </Link>
         <Link
           to="/finance"
-          className="inline-flex items-center gap-2 min-h-[40px] px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg font-medium text-sm transition-colors"
+          className="inline-flex items-center gap-2 min-h-[44px] px-5 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl font-medium text-sm transition-colors"
         >
-          <DollarSign className="w-4 h-4 text-slate-500" /> General Ledger
+          <DollarSign className="w-5 h-5 text-slate-500" /> General Ledger
         </Link>
       </div>
 
       {/* KPI Cards (4-column grid with gap-6, equal heights) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* Card 1: Catalog SKUs */}
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Catalog Items</span>
                 <Tooltip content="Count of items in warehouse registry (PostgreSQL)">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Catalog Items details" />
+                  <Info className="w-4 h-4 text-slate-400 cursor-pointer" aria-label="Catalog Items details" />
                 </Tooltip>
               </div>
               <Boxes className="w-6 h-6 text-indigo-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">{totalItemsCount}</span>
+              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono tabular-nums">{totalItemsCount}</span>
               <span className="text-sm font-semibold text-emerald-600">Active SKUs</span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Inventory Valuation */}
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Valuation</span>
                 <Tooltip content="Formula: Σ(stock_qty × unit_price) · Balance sheet asset value">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Valuation formula details" />
+                  <Info className="w-4 h-4 text-slate-400 cursor-pointer" aria-label="Valuation formula details" />
                 </Tooltip>
               </div>
               <DollarSign className="w-6 h-6 text-emerald-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">
+              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono tabular-nums">
                 ₹{totalValuation.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </span>
             </div>
@@ -185,47 +185,47 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Card 3: Low Stock Alerts */}
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Low Stock Alerts</span>
                 <Tooltip content="Criteria: stock_qty ≤ safety_stock">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Low stock criteria details" />
+                  <Info className="w-4 h-4 text-slate-400 cursor-pointer" aria-label="Low stock criteria details" />
                 </Tooltip>
               </div>
               <AlertTriangle className="w-6 h-6 text-amber-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono">{lowStockCount}</span>
+              <span className="text-3xl lg:text-4xl font-bold text-amber-600 font-mono tabular-nums">{lowStockCount}</span>
               <span className="text-sm font-semibold text-amber-700">Needs replenishment</span>
             </div>
           </div>
         </div>
 
         {/* Card 4: Active Procurement Pipeline & Ledger Telemetry */}
-        <div className="bg-white p-6 xl:p-7 rounded-xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
+        <div className="bg-white p-6 xl:p-7 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:border-slate-300 transition-all flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pipeline Requests</span>
                 <Tooltip content="Requisitions currently in approval or fulfilment pipeline">
-                  <Info className="w-3.5 h-3.5 text-slate-400 cursor-pointer" aria-label="Pipeline details" />
+                  <Info className="w-4 h-4 text-slate-400 cursor-pointer" aria-label="Pipeline details" />
                 </Tooltip>
               </div>
               <Clock className="w-6 h-6 text-indigo-500" aria-hidden="true" />
             </div>
             <div className="mt-4 flex items-baseline gap-2.5">
-              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono">{pendingPRCount}</span>
+              <span className="text-3xl lg:text-4xl font-bold text-slate-900 font-mono tabular-nums">{pendingPRCount}</span>
               <span className="text-sm text-indigo-600 font-semibold">Active PRs</span>
             </div>
           </div>
           {ledgerBalanced === true && (
-            <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700 flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="mt-4 pt-3 border-t border-slate-100 text-xs font-semibold text-emerald-700 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>Ledger Balanced</span>
               <Tooltip content="Delta = ₹0.00 (Debit/Credit exactly balanced)">
-                <Info className="w-3.5 h-3.5 text-emerald-600/70 cursor-pointer" aria-label="Ledger delta info" />
+                <Info className="w-4 h-4 text-emerald-600/70 cursor-pointer" aria-label="Ledger delta info" />
               </Tooltip>
             </div>
           )}

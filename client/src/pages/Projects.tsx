@@ -204,14 +204,14 @@ export const Projects: React.FC = () => {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 min-h-[36px] text-xs font-semibold rounded-lg border transition-colors shrink-0 flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 min-h-[40px] text-xs font-semibold rounded-lg border transition-colors shrink-0 flex items-center gap-2 ${
                   activeTab === tab
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 <span>{labelMap[tab]}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                <span className={`px-2 py-0.5 rounded-full text-xs font-mono font-medium ${
                   activeTab === tab ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
                 }`}>
                   {projectCounts[tab]}
@@ -339,15 +339,15 @@ export const Projects: React.FC = () => {
 
                 {/* Thin Budget Progress Bar */}
                 <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-400">Budget Burndown ({budgetPct}%)</span>
-                    <span className="font-mono text-slate-600">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-slate-500 font-medium">Budget Burndown ({budgetPct}%)</span>
+                    <span className="font-mono text-slate-700">
                       {formatCurrency(Number(p.consumed_budget || 0))} / {formatCurrency(Number(p.allocated_budget || 0))}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1 overflow-hidden">
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className={`h-1 rounded-full transition-all duration-300 ${
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
                         budgetPct > 90 ? 'bg-rose-500' : budgetPct > 75 ? 'bg-amber-500' : 'bg-emerald-500'
                       }`}
                       style={{ width: `${budgetPct}%` }}

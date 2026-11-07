@@ -324,9 +324,9 @@ export const HR: React.FC = () => {
           <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
             403
           </div>
-          <h3 className="text-sm font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
-          <p className="text-xs text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
-          <span className="text-[11px] text-slate-400 block">Switch to HR Manager or Super Admin in the top-right header to view employee records.</span>
+          <h3 className="text-base font-bold text-slate-800">Access Restricted (RBAC Policy Enforced)</h3>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">{forbiddenError}</p>
+          <span className="text-xs text-slate-500 block">Switch to HR Manager or Super Admin in the top-right header to view employee records.</span>
         </div>
       ) : activeTab === 'employees' ? (
         /* Tab 1: Employee Directory */
@@ -390,7 +390,7 @@ export const HR: React.FC = () => {
 
                   return (
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-full ${bgColors[colorIdx]} text-white text-[11px] font-bold flex items-center justify-center shrink-0`}>
+                      <div className={`w-8 h-8 rounded-full ${bgColors[colorIdx]} text-white text-xs font-bold flex items-center justify-center shrink-0`}>
                         {initials}
                       </div>
                       <span className="font-medium text-slate-800">{fullName}</span>

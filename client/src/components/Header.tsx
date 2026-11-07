@@ -118,6 +118,11 @@ export const Header: React.FC = () => {
           <Menu className="w-5 h-5 text-slate-700" aria-hidden="true" />
         </button>
 
+        {/* Mobile Logo Link */}
+        <Link to="/" aria-label="Go to Home" className="lg:hidden flex items-center shrink-0">
+          <img src="/logo.png" alt="ENTRIX ERP Logo" className="w-8 h-8 object-contain rounded-md" />
+        </Link>
+
         <div className="relative w-full">
           <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input

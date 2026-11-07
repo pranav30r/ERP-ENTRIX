@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -60,15 +60,17 @@ export const Sidebar: React.FC = () => {
       <div>
         {/* Brand Header */}
         <div className="h-14 lg:h-16 flex items-center justify-between px-6 border-b border-charcoal-800/80">
-          <div className="flex items-center gap-3.5">
-            <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-sm shadow-indigo-500/30">
-              E
-            </div>
+          <Link to="/" className="flex items-center gap-3.5 group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1 -ml-1">
+            <img
+              src="/logo.png"
+              alt="ENTRIX ERP Logo"
+              className="w-9 h-9 object-contain rounded-lg shadow-sm group-hover:scale-105 transition-transform"
+            />
             <div>
-              <h1 className="text-base font-bold tracking-wide text-white uppercase">ENTRIX</h1>
+              <h1 className="text-base font-bold tracking-wide text-white uppercase group-hover:text-indigo-300 transition-colors">ENTRIX</h1>
               <p className="text-xs text-slate-400 font-mono">ERP PLATFORM</p>
             </div>
-          </div>
+          </Link>
           {/* Mobile close button */}
           <button
             onClick={() => setMobileOpen(false)}

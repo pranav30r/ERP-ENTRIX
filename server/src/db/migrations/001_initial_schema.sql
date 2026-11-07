@@ -9,10 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pr_status_enum') THEN
-        CREATE TYPE pr_status_enum AS ENUM (
-            'DRAFT', 'PENDING_MANAGER', 'PENDING_FINANCE', 
-            'APPROVED', 'PO_ISSUED', 'GOODS_RECEIVED', 'INVOICE_MATCHED', 'CLOSED', 'REJECTED'
-        );
+        CREATE TYPE pr_status_enum AS ENUM ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'FULFILLED');
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'attendance_status_enum') THEN
         CREATE TYPE attendance_status_enum AS ENUM ('PRESENT', 'ABSENT', 'ON_LEAVE', 'HALF_DAY');
@@ -88,10 +85,9 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
     department_id UUID NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
     item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE RESTRICT,
     quantity INT NOT NULL CHECK (quantity > 0),
-    estimated_total NUMERIC(12, 2) NOT NULL CHECK (estimated_total >= 0.00),
+    estimated_cost NUMERIC(12, 2) NOT NULL CHECK (estimated_cost >= 0.00),
+    justification TEXT,
     status pr_status_enum NOT NULL DEFAULT 'DRAFT',
-    justification TEXT NOT NULL,
-    rejection_reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

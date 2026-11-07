@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, Info, Copy, Check, FileCode2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, RefreshCw, Info, Copy, Check, FileCode2, Download } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -7,6 +7,7 @@ import { Tooltip } from '../components/ui/Tooltip';
 import { DataTable } from '../components/ui/DataTable';
 import { EmptyState } from '../components/ui/EmptyState';
 import { formatDateTime } from '../lib/format';
+import { exportToCsv } from '../lib/csv';
 
 interface AuditLogEntry {
   id: number;
@@ -83,8 +84,33 @@ export const AuditLogs: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = 'Audit Logs | ENTRIX ERP';
     fetchAuditLogs();
   }, []);
+
+  const handleExportAuditCsv = () => {
+    exportToCsv(
+      'audit_trails',
+      filteredLogs.map(l => ({
+        timestamp: l.timestamp,
+        action: l.action,
+        entity_name: l.entity_name,
+        entity_id: l.entity_id,
+        actor_id: l.actor_id || 'SYSTEM',
+        current_hash: l.current_hash,
+        previous_hash: l.previous_hash
+      })),
+      [
+        { key: 'timestamp', header: 'Timestamp' },
+        { key: 'action', header: 'Action' },
+        { key: 'entity_name', header: 'Entity' },
+        { key: 'entity_id', header: 'Entity ID' },
+        { key: 'actor_id', header: 'Actor' },
+        { key: 'current_hash', header: 'SHA-256 Hash' },
+        { key: 'previous_hash', header: 'Parent Hash' }
+      ]
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -93,6 +119,10 @@ export const AuditLogs: React.FC = () => {
         subtitle="Cryptographically verified state mutation chain"
         actions={
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportAuditCsv} disabled={loading || filteredLogs.length === 0}>
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Export CSV
+            </Button>
             <Tooltip content="SHA-256 chained governance records with mathematical tamper validation">
               <span className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer">
                 <Info className="w-4 h-4" />

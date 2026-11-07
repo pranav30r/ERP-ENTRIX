@@ -6,6 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { LoadingFallback } from './components/ui/LoadingFallback';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 
 // Route-level code-splitting for high-performance chunked loading
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -43,6 +44,7 @@ export const App = () => {
               element={
                 <div className="flex h-screen bg-stripe-canvas overflow-hidden">
                   {/* Skip link for keyboard accessibility (WCAG 2.2 AA) */}
+                  <SessionTimeoutWarning />
                   <a
                     href="#main-content"
                     className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white text-xs font-semibold"

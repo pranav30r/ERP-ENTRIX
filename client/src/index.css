@@ -67,3 +67,46 @@ button, a, input, select, textarea, tr, .transition-colors, .transition-all {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Document Print Styling for Ledgers, Invoices, Requisitions */
+@media print {
+  aside,
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .shadow-card,
+  .shadow-sm,
+  .shadow-md {
+    box-shadow: none !important;
+  }
+
+  .border {
+    border-color: #cbd5e1 !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    padding: 6pt 8pt !important;
+    border-bottom: 1pt solid #e2e8f0 !important;
+  }
+}

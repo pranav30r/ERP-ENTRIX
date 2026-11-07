@@ -197,7 +197,7 @@ const PAGES: PageTestConfig[] = [
     name: 'Plans & Billing',
     path: '/settings/billing',
     slug: 'billing',
-    expectedHeading: 'Plans & Monetization Management',
+    expectedHeading: 'Plans & Subscription Management',
     hasTable: true,
     interactiveActions: async (page) => {
       // Inspect plan switch buttons

@@ -46,6 +46,11 @@ export default {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+      },
+      fontSize: {
+        'icon-sm': ['18px', '18px'],
+        'icon-md': ['20px', '20px'],
+        'icon-lg': ['24px', '24px'],
       }
     },
   },

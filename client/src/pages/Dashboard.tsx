@@ -76,6 +76,7 @@ export const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = 'Dashboard | ENTRIX ERP';
     fetchDashboardData();
   }, []);
 
@@ -90,7 +91,21 @@ export const Dashboard: React.FC = () => {
   );
 
   const totalItemsCount = displayInventory.length;
-  const lowStockCount = displayInventory.filter((item) => Number(item.stock_qty) <= Number(item.safety_stock)).length;
+  const lowStockCount = displayInventory.filter(i => Number(i.stock_qty) <= Number(i.safety_stock)).length;
+
+  const [dismissChecklist, setDismissChecklist] = useState(() => {
+    return localStorage.getItem('entrix_dismiss_checklist') === 'true';
+  });
+
+  const handleDismissChecklist = () => {
+    localStorage.setItem('entrix_dismiss_checklist', 'true');
+    setDismissChecklist(true);
+  };
+
+  const handleLoadSampleData = () => {
+    alert("Sample company data successfully loaded for trial evaluation (SKUs, suppliers, and ledger entries).");
+    fetchDashboardData();
+  };
 
   return (
     <div className="space-y-6 lg:space-y-8">
@@ -111,6 +126,70 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" aria-hidden="true" />
             <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Setup Checklist (Dismissible with progress) */}
+      {!dismissChecklist && (
+        <div className="p-5 bg-gradient-to-r from-indigo-50/70 via-white to-slate-50 border border-indigo-100 rounded-2xl shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-md">Setup Wizard</span>
+                <h3 className="font-semibold text-slate-900 text-base">Company Launch Checklist</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Complete initial company setup to unlock all automated compliance and ledger workflows.</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" onClick={handleLoadSampleData}>
+                Load Sample Data
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDismissChecklist} className="text-slate-400 hover:text-slate-600 text-xs">
+                Dismiss
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs font-medium text-slate-600">
+              <span>Overall Onboarding Progress</span>
+              <span className="font-semibold text-indigo-600">50% Completed (2/4)</span>
+            </div>
+            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div className="bg-indigo-600 h-full w-1/2 transition-all duration-500" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+            <Link to="/settings/company" className="p-3 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-slate-900">1. Company Profile</p>
+                <p className="text-[11px] text-slate-500">Legal entity & GSTIN setup</p>
+              </div>
+            </Link>
+            <Link to="/inventory" className="p-3 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors flex items-start gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-slate-900">2. Master SKUs</p>
+                <p className="text-[11px] text-slate-500">Warehouse catalog indexed</p>
+              </div>
+            </Link>
+            <Link to="/hr" className="p-3 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors flex items-start gap-2.5">
+              <div className="w-4 h-4 rounded-full border border-slate-300 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-slate-900">3. Invite Team</p>
+                <p className="text-[11px] text-slate-500">Assign RBAC roles</p>
+              </div>
+            </Link>
+            <Link to="/procurement" className="p-3 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 transition-colors flex items-start gap-2.5">
+              <div className="w-4 h-4 rounded-full border border-slate-300 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-slate-900">4. First PO</p>
+                <p className="text-[11px] text-slate-500">Submit procurement request</p>
+              </div>
+            </Link>
           </div>
         </div>
       )}

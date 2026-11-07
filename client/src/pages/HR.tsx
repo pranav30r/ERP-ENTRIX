@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, UserPlus, Calendar, Search, Edit2, X, Users, Copy, Check, CheckCircle2, Loader2 } from 'lucide-react';
+import { RefreshCw, UserPlus, Calendar, Search, Edit2, X, Users, Copy, Check, CheckCircle2, Loader2, Download, Upload, Eye, EyeOff } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -8,9 +8,11 @@ import { DataTable } from '../components/ui/DataTable';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Tooltip } from '../components/ui/Tooltip';
 import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { CsvImportDialog } from '../components/ui/CsvImportDialog';
 import { useTestDataToggle } from '../hooks/useTestDataToggle';
 import { isTestRecord } from '../lib/testData';
 import { formatCurrency, formatDate } from '../lib/format';
+import { exportToCsv } from '../lib/csv';
 import { useDebounce } from '../hooks/useDebounce';
 
 export const HR: React.FC = () => {
@@ -106,6 +108,66 @@ export const HR: React.FC = () => {
   const [attCheckIn, setAttCheckIn] = useState('09:00');
   const [attCheckOut, setAttCheckOut] = useState('18:00');
   const [attNotes, setAttNotes] = useState('');
+  const [showSalaries, setShowSalaries] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Human Resources | ENTRIX ERP';
+  }, []);
+
+  const handleExportEmployeesCsv = () => {
+    exportToCsv(
+      'employee_roster',
+      filteredEmployees.map(e => ({
+        code: e.employee_code,
+        name: e.user ? `${e.user.first_name} ${e.user.last_name}` : '—',
+        email: e.user?.email || '',
+        designation: e.designation,
+        department: e.department?.name || '—',
+        salary: e.base_salary,
+        leave_balance: e.annual_leave_balance
+      })),
+      [
+        { key: 'code', header: 'Employee Code' },
+        { key: 'name', header: 'Full Name' },
+        { key: 'email', header: 'Email' },
+        { key: 'designation', header: 'Designation' },
+        { key: 'department', header: 'Department' },
+        { key: 'salary', header: 'Base Salary (INR)' },
+        { key: 'leave_balance', header: 'Leave Balance' }
+      ]
+    );
+  };
+
+  const handleConfirmImport = async (records: Record<string, string>[]) => {
+    setSubmitting(true);
+    let successCount = 0;
+    try {
+      await ensureAuthenticated();
+      for (const rec of records) {
+        const nameParts = (rec['Full Name'] || rec.name || '').trim().split(' ');
+        const firstName = nameParts[0] || 'Employee';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+        await apiClient.post('/hr/employees', {
+          first_name: firstName,
+          last_name: lastName,
+          email: rec['Email'] || rec.email,
+          designation: rec['Designation'] || rec.designation || 'Specialist',
+          employee_code: rec['Employee Code'] || rec.code,
+          base_salary: Number(rec['Base Salary (INR)'] || rec.salary || 50000),
+          annual_leave_balance: Number(rec['Leave Balance'] || rec.leave_balance || 18)
+        });
+        successCount++;
+      }
+      setIsImportModalOpen(false);
+      setFeedbackMsg({ type: 'success', text: `Successfully imported ${successCount} employees.` });
+      await fetchEmployees();
+    } catch (err: any) {
+      setFeedbackMsg({ type: 'error', text: `Import error: ${err.response?.data?.error || err.message}` });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -252,6 +314,22 @@ export const HR: React.FC = () => {
         subtitle="Personnel directory, organizational records, and daily attendance tracking"
         actions={
           <div className="flex items-center gap-2">
+            {activeTab === 'employees' && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setShowSalaries(!showSalaries)}>
+                  {showSalaries ? <EyeOff className="w-3.5 h-3.5 mr-1.5" /> : <Eye className="w-3.5 h-3.5 mr-1.5" />}
+                  {showSalaries ? 'Mask Salary' : 'Reveal Salary'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportEmployeesCsv} disabled={loading || filteredEmployees.length === 0}>
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Export CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setIsImportModalOpen(true)}>
+                  <Upload className="w-3.5 h-3.5 mr-1.5" />
+                  Import CSV
+                </Button>
+              </>
+            )}
             <Button variant="outline" size="sm" onClick={activeTab === 'employees' ? fetchEmployees : fetchAttendance} disabled={loading}>
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -434,7 +512,7 @@ export const HR: React.FC = () => {
                 align: 'right',
                 render: (emp) => (
                   <span className="font-mono text-slate-900 font-semibold tabular-nums">
-                    {formatCurrency(Number(emp.base_salary))}
+                    {showSalaries ? formatCurrency(Number(emp.base_salary)) : '••••••••'}
                   </span>
                 )
               },
@@ -833,6 +911,22 @@ export const HR: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CSV Import Modal */}
+      <CsvImportDialog
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import Employees via CSV"
+        expectedColumns={['Employee Code', 'Full Name', 'Email', 'Designation', 'Department', 'Base Salary (INR)', 'Leave Balance']}
+        onConfirmImport={handleConfirmImport}
+        validateRow={(row) => {
+          const code = row['Employee Code'] || row.code;
+          const email = row['Email'] || row.email;
+          if (!code) return 'Missing Employee Code';
+          if (!email || !email.includes('@')) return 'Invalid or missing Email';
+          return null;
+        }}
+      />
     </div>
   );
 };

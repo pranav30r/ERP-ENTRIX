@@ -130,8 +130,11 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Footer Padding */}
-      <div className="p-4" />
+      {/* Footer Version Info */}
+      <div className="px-6 py-4 border-t border-charcoal-800/80 text-[11px] font-mono text-slate-500 flex items-center justify-between">
+        <span>ENTRIX ERP</span>
+        <span>v1.0.0</span>
+      </div>
     </div>
   );
 

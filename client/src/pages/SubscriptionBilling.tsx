@@ -191,6 +191,7 @@ export const SubscriptionBilling: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = 'Plans & Billing | ENTRIX ERP';
     fetchBillingData();
   }, []);
 
@@ -300,12 +301,14 @@ export const SubscriptionBilling: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <PageHeader
-        title="Plans & Monetization Management"
-        subtitle="Monitor your subscription status, resource allocations, metered operations, and invoice records."
+        title="Plans & Subscription Management"
+        subtitle="Monitor your organization plan status, resource allocations, metered operations, and invoice records."
         actions={
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            Sandbox Simulation Mode (Zero Cost)
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Live Billing Enabled
+            </span>
+          </div>
         }
       />
 

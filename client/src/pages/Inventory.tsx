@@ -12,7 +12,9 @@ import {
   DollarSign, 
   RefreshCw,
   SlidersHorizontal,
-  Info
+  Info,
+  Download,
+  Upload
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { IconButton } from '../components/ui/IconButton';
@@ -22,9 +24,12 @@ import { StatusPill } from '../components/ui/StatusPill';
 import { DataTable } from '../components/ui/DataTable';
 import { EmptyState } from '../components/ui/EmptyState';
 import { TestDataToggle } from '../components/ui/TestDataToggle';
+import { CsvImportDialog } from '../components/ui/CsvImportDialog';
 import { useTestDataToggle } from '../hooks/useTestDataToggle';
 import { isTestRecord } from '../lib/testData';
 import { formatCurrency, formatNumber } from '../lib/format';
+import { exportToCsv } from '../lib/csv';
+import { validateHSN } from '../lib/indiaCompliance';
 import { apiClient, ensureAuthenticated, CanceledError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useDebounce } from '../hooks/useDebounce';
@@ -69,10 +74,14 @@ export const Inventory: React.FC = () => {
   const [skuCode, setSkuCode] = useState('');
   const [itemName, setItemName] = useState('');
   const [category, setCategory] = useState('Raw Materials');
+  const [hsnCode, setHsnCode] = useState('');
   const [uom, setUom] = useState('PCS');
   const [unitPrice, setUnitPrice] = useState<number>(100);
   const [stockQty, setStockQty] = useState<number>(50);
   const [safetyStock, setSafetyStock] = useState<number>(20);
+
+  // CSV Import Modal
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -170,9 +179,60 @@ export const Inventory: React.FC = () => {
     }
   };
 
+  const handleExportCsv = () => {
+    exportToCsv(
+      'inventory_master',
+      filteredAndSortedItems,
+      [
+        { key: 'sku_code', header: 'SKU Code' },
+        { key: 'name', header: 'Item Name' },
+        { key: 'category', header: 'Category' },
+        { key: 'unit_price', header: 'Unit Price' },
+        { key: 'stock_qty', header: 'Current Stock' },
+        { key: 'unit_of_measure', header: 'UOM' },
+        { key: 'safety_stock', header: 'Safety Stock' }
+      ]
+    );
+  };
+
+  const handleConfirmImport = async (records: Record<string, string>[]) => {
+    setSubmitting(true);
+    let successCount = 0;
+    try {
+      await ensureAuthenticated();
+      for (const rec of records) {
+        await apiClient.post('/inventory', {
+          sku_code: rec['SKU Code'] || rec.sku_code,
+          name: rec['Item Name'] || rec.name,
+          category: rec['Category'] || rec.category || 'Raw Materials',
+          unit_of_measure: rec['UOM'] || rec.unit_of_measure || 'PCS',
+          unit_price: Number(rec['Unit Price'] || rec.unit_price || 0),
+          stock_qty: Number(rec['Current Stock'] || rec['Stock Qty'] || rec.stock_qty || 0),
+          safety_stock: Number(rec['Safety Stock'] || rec.safety_stock || 10)
+        });
+        successCount++;
+      }
+      setIsImportModalOpen(false);
+      setFeedback({ type: 'success', text: `Imported ${successCount} inventory items successfully.` });
+      await fetchInventory();
+    } catch (err: any) {
+      setFeedback({ type: 'error', text: `Import partially failed: ${err.response?.data?.error || err.message}` });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    document.title = 'Inventory Master | ENTRIX ERP';
+  }, []);
+
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!skuCode || !itemName) return;
+    if (hsnCode && !validateHSN(hsnCode)) {
+      setFeedback({ type: 'error', text: 'Invalid HSN code. It must be 4 to 8 numeric digits.' });
+      return;
+    }
     setSubmitting(true);
     setFeedback(null);
     try {
@@ -209,6 +269,25 @@ export const Inventory: React.FC = () => {
         subtitle="Real-time stock valuation, perpetual inventory ledger, and replenishment reorder points."
         actions={
           <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportCsv}
+              disabled={loading || filteredAndSortedItems.length === 0}
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </Button>
+            {canManage && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </Button>
+            )}
             <Button 
               variant="outline" 
               size="sm" 
@@ -556,6 +635,21 @@ export const Inventory: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-700 font-medium">HSN / SAC Code (GST)</label>
+                  <span className="text-[10px] text-slate-400">4-8 digits</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. 85414011"
+                  value={hsnCode}
+                  onChange={(e) => setHsnCode(e.target.value)}
+                  maxLength={8}
+                  className="w-full px-3 py-1.5 border border-slate-200 rounded-md bg-slate-50 focus:bg-white text-slate-800 font-mono"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-700 font-medium mb-1">Category</label>
@@ -743,6 +837,22 @@ export const Inventory: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* CSV Import Dialog */}
+      <CsvImportDialog
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Import Inventory SKUs via CSV"
+        expectedColumns={['SKU Code', 'Item Name', 'Category', 'Unit Price', 'Stock Qty', 'UOM']}
+        onConfirmImport={handleConfirmImport}
+        validateRow={(row) => {
+          const sku = row['SKU Code'] || row.sku_code;
+          const name = row['Item Name'] || row.name;
+          if (!sku) return 'Missing SKU Code';
+          if (!name) return 'Missing Item Name';
+          return null;
+        }}
+      />
     </div>
   );
 };

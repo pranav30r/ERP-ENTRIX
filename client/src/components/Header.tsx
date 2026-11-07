@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Search, ChevronDown, Loader2, Menu, Sparkles } from 'lucide-react';
+import { Bell, Search, ChevronDown, Loader2, Menu, Sparkles, HelpCircle, ExternalLink, ShieldCheck } from 'lucide-react';
 import { getSocket } from '../services/socket';
 import { useAuth, DEMO_PERSONAS } from '../context/AuthContext';
 import { useNav } from '../context/NavContext';
@@ -12,6 +12,7 @@ export const Header: React.FC = () => {
   const { toggleMobile } = useNav();
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
@@ -171,12 +172,22 @@ export const Header: React.FC = () => {
               className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-30 text-sm"
             >
               <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between font-semibold text-slate-700">
-                <span>Socket.io Live Events</span>
-                <span className="text-xs text-slate-400 font-mono">{notifications.length} recent</span>
+                <span>Alerts & Events</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 font-mono">{notifications.length} recent</span>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={() => setNotifications([])}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
                 {notifications.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-slate-400 text-sm">
+                  <div className="px-4 py-6 text-center text-slate-400 text-xs">
                     No new event transmissions received.
                   </div>
                 ) : (
@@ -187,6 +198,61 @@ export const Header: React.FC = () => {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Help & Documentation Menu */}
+        <div className="relative">
+          <button
+            onClick={() => setShowHelpMenu(!showHelpMenu)}
+            aria-label="Help and resources menu"
+            className="p-2.5 min-w-[40px] min-h-[40px] flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            <HelpCircle className="w-5 h-5 text-slate-500" />
+          </button>
+
+          {showHelpMenu && (
+            <div
+              className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-30 text-xs divide-y divide-slate-100"
+            >
+              <div className="px-4 py-2 font-semibold text-slate-800">Help & Support</div>
+              <div className="py-1">
+                <a
+                  href="https://docs.entrix.local"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                >
+                  <span>Product Documentation</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </a>
+                <a
+                  href="mailto:support@entrix.local"
+                  className="px-4 py-2 hover:bg-slate-50 flex items-center justify-between text-slate-700"
+                >
+                  <span>Contact Enterprise Support</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                </a>
+                <button
+                  onClick={() => {
+                    setShowHelpMenu(false);
+                    alert("Keyboard Shortcuts:\n• Ctrl+K / Cmd+K: Focus global search\n• Esc: Close active modal or blur search\n• Tab: Navigate accessible interactive elements");
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-slate-50 text-slate-700 flex items-center justify-between"
+                >
+                  <span>Keyboard Shortcuts</span>
+                  <span className="font-mono text-[10px] text-slate-400">Ctrl+K</span>
+                </button>
+              </div>
+              <div className="py-1 text-[11px] text-slate-500">
+                <a href="#terms" onClick={(e) => { e.preventDefault(); alert("ENTRIX Enterprise Master Services Agreement (MSA) v2.4"); }} className="block px-4 py-1.5 hover:bg-slate-50">
+                  Terms of Service
+                </a>
+                <a href="#privacy" onClick={(e) => { e.preventDefault(); alert("ENTRIX Privacy Policy (ISO/IEC 27001 & SOC 2 Type II Compliant)"); }} className="block px-4 py-1.5 hover:bg-slate-50">
+                  Privacy Policy
+                </a>
               </div>
             </div>
           )}
@@ -236,6 +302,13 @@ export const Header: React.FC = () => {
                   </StatusPill>
                 </div>
                 <p className="text-xs text-muted font-mono">{user?.email || 'admin@entrix.local'}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    Last login: Today, 11:45 AM
+                  </span>
+                  <span>IP: 10.0.4.12</span>
+                </div>
               </div>
 
               <div className="px-4 py-2 bg-slate-50/30">

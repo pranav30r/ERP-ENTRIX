@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft, Info, BookOpen } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, RefreshCw, FileText, ArrowDownLeft, Info, BookOpen, Download, Printer } from 'lucide-react';
 import { apiClient, ensureAuthenticated } from '../services/api';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -8,6 +8,7 @@ import { StatusPill } from '../components/ui/StatusPill';
 import { DataTable } from '../components/ui/DataTable';
 import { EmptyState } from '../components/ui/EmptyState';
 import { formatDateTime, formatCurrency } from '../lib/format';
+import { exportToCsv } from '../lib/csv';
 
 export const Finance: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'RECEIVABLES'>('LEDGER');
@@ -72,8 +73,38 @@ export const Finance: React.FC = () => {
   };
 
   useEffect(() => {
+    document.title = 'Finance & Ledger | ENTRIX ERP';
     fetchLedger();
   }, []);
+
+  const handleExportLedgerCsv = () => {
+    exportToCsv(
+      'general_ledger',
+      entries.map(e => ({
+        created_at: e.created_at,
+        account_code: e.account_code,
+        account_name: e.account_name,
+        entry_type: e.entry_type,
+        debit: e.entry_type === 'DEBIT' ? e.amount : 0,
+        credit: e.entry_type === 'CREDIT' ? e.amount : 0,
+        reference_type: e.reference_type,
+        reference_id: e.reference_id
+      })),
+      [
+        { key: 'created_at', header: 'Timestamp' },
+        { key: 'account_code', header: 'Account Code' },
+        { key: 'account_name', header: 'Account Name' },
+        { key: 'entry_type', header: 'Type' },
+        { key: 'debit', header: 'Debit (INR)' },
+        { key: 'credit', header: 'Credit (INR)' },
+        { key: 'reference_type', header: 'Reference' }
+      ]
+    );
+  };
+
+  const handlePrintLedger = () => {
+    window.print();
+  };
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +159,14 @@ export const Finance: React.FC = () => {
         subtitle="Double-entry journal with balanced debits and credits"
         actions={
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportLedgerCsv} disabled={loading || entries.length === 0}>
+              <Download className="w-4 h-4 mr-1.5" />
+              Export CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePrintLedger}>
+              <Printer className="w-4 h-4 mr-1.5" />
+              Print Ledger
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchLedger} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
               Refresh
